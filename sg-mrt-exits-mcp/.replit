@@ -1,0 +1,17 @@
+modules = ["python-3.11"]
+
+run = "python3 main.py"
+
+[nix]
+channel = "stable-25_05"
+
+[deployment]
+run = ["python3", "main.py"]
+deploymentTarget = "autoscale"
+
+[deployment.env]
+MCP_TRANSPORT = "streamable-http"
+
+[[ports]]
+localPort = 8000
+externalPort = 80
