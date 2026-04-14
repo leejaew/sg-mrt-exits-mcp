@@ -105,17 +105,25 @@ const TRANSPORT_CONFIGS: Record<Transport, string> = {
   }
 }`,
   sse: `{
-  "type": "sse",
-  "url": "https://your-deployed-mcp-server.com/sse"
+  "mcpServers": {
+    "sg-mrt-exits": {
+      "transportType": "sse",
+      "url": "https://your-deployed-mcp-server.replit.app/sse"
+    }
+  }
 }`,
   stdio: `{
-  "type": "stdio",
-  "command": "python3",
-  "args": ["/path/to/sg-mrt-exits-mcp/main.py"],
-  "env": {
-    "API_BASE_URL": "https://api.jael.ee",
-    "API_USERNAME": "your-username",
-    "API_TOKEN": "your-api-token"
+  "mcpServers": {
+    "sg-mrt-exits": {
+      "transportType": "stdio",
+      "command": "python3",
+      "args": ["/path/to/sg-mrt-exits-mcp/main.py"],
+      "env": {
+        "API_BASE_URL": "https://api.jael.ee",
+        "API_USERNAME": "your-username",
+        "API_TOKEN": "your-api-token"
+      }
+    }
   }
 }`,
 };
@@ -136,7 +144,8 @@ const TRANSPORT_HINTS: Record<Transport, React.ReactNode> = {
       <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
         Settings → MCP → Custom
       </span>
-      . Replace the URL with your deployed SSE endpoint.
+      . Replace the URL with your deployed SSE endpoint.{" "}
+      Note: SSE is a legacy transport — prefer Streamable HTTP for new deployments.
     </>
   ),
   stdio: (
