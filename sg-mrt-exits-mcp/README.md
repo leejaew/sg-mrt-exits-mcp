@@ -88,7 +88,7 @@ The server communicates over **stdio** (standard MCP transport), making it compa
 
 ## Connection Config
 
-### Manus AI — Streamable HTTP (recommended)
+### Manus AI — Streamable HTTP (recommended, tested)
 
 ```json
 {
@@ -101,7 +101,36 @@ The server communicates over **stdio** (standard MCP transport), making it compa
 }
 ```
 
-### Manus AI — STDIO
+### SSE — Claude.ai, Cursor, Windsurf, and other SSE-compatible clients
+
+SSE (Server-Sent Events) is the older HTTP transport, superseded by Streamable HTTP but still widely supported. When deployed, the server exposes the SSE endpoint at `/sse`.
+
+```json
+{
+  "mcpServers": {
+    "sg-mrt-exits": {
+      "type": "sse",
+      "url": "https://your-deployed-mcp-server.replit.app/sse"
+    }
+  }
+}
+```
+
+Some clients (e.g. Cursor) omit the `type` key and infer SSE from the URL:
+
+```json
+{
+  "mcpServers": {
+    "sg-mrt-exits": {
+      "url": "https://your-deployed-mcp-server.replit.app/sse"
+    }
+  }
+}
+```
+
+### Manus AI — STDIO *(not tested)*
+
+> **Note:** This configuration has not been tested. It should work with any MCP client that supports stdio transport, but your mileage may vary.
 
 ```json
 {
@@ -117,7 +146,9 @@ The server communicates over **stdio** (standard MCP transport), making it compa
 
 Credentials (`API_BASE_URL`, `API_USERNAME`, `API_TOKEN`) are inherited from the host environment — set them in your shell profile or system env rather than hardcoding them in the config.
 
-### Claude Desktop
+### Claude Desktop *(not tested)*
+
+> **Note:** This configuration has not been tested. The format follows the Claude Desktop MCP documentation but has not been verified end-to-end.
 
 ```json
 {
