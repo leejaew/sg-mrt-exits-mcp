@@ -1,6 +1,14 @@
 # sg-mrt-exits-mcp
 
-A **Model Context Protocol (MCP) server** that wraps the Singapore LTA MRT Station Exit GeoJSON API. Exposes 15 tools for AI assistants (Claude, GPT-4, etc.) to answer real-world questions about Singapore's MRT network — covering navigation, accessibility, retail analytics, logistics, emergency response, and tourist use cases.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![MCP Compatible](https://img.shields.io/badge/MCP-compatible-00C7B7)](https://modelcontextprotocol.io)
+[![Tools](https://img.shields.io/badge/tools-15-orange)](https://github.com/leejaew/sg-mrt-exits-mcp)
+[![Remix on Replit](https://img.shields.io/badge/Remix%20on-Replit-667881?logo=replit&logoColor=white)](https://replit.com/@leejaew/SG-MRT-Exits-MCP?v=1)
+
+A **Model Context Protocol (MCP) server** that wraps the Singapore LTA MRT Station Exit GeoJSON API. Exposes 15 tools for AI assistants (Claude, Manus AI, and other MCP-compatible agents) to answer real-world questions about Singapore's MRT network — covering navigation, accessibility, retail analytics, logistics, emergency response, and tourist use cases.
+
+**Remix this project on Replit** and deploy your own instance in minutes: [replit.com/@leejaew/SG-MRT-Exits-MCP](https://replit.com/@leejaew/SG-MRT-Exits-MCP?v=1). New to Replit? [Sign up here](https://replit.com/refer/leejaew).
 
 ---
 
@@ -65,25 +73,49 @@ The endpoint path can also be overridden via `API_ENDPOINT_PATH` if needed (defa
 python main.py
 ```
 
-The server communicates over **stdio** (standard MCP transport), making it compatible with Claude Desktop, the Claude API, and any MCP-compliant client.
+The server communicates over **stdio** (standard MCP transport), making it compatible with Claude Desktop, the Claude API, Manus AI, and any MCP-compliant client.
 
 ---
 
-## Claude Desktop Configuration
+## Connection Config
 
-Add to `claude_desktop_config.json`:
+### Manus AI — Streamable HTTP (recommended)
+
+```json
+{
+  "mcpServers": {
+    "sg-mrt-exits": {
+      "type": "streamableHttp",
+      "url": "https://your-deployed-mcp-server.replit.app/mcp"
+    }
+  }
+}
+```
+
+### Manus AI — STDIO
+
+```json
+{
+  "mcpServers": {
+    "sg-mrt-exits": {
+      "transportType": "stdio",
+      "command": "python3",
+      "args": ["/path/to/sg-mrt-exits-mcp/main.py"]
+    }
+  }
+}
+```
+
+Credentials (`API_BASE_URL`, `API_USERNAME`, `API_TOKEN`) are inherited from the host environment — set them in your shell profile or system env rather than hardcoding them in the config.
+
+### Claude Desktop
 
 ```json
 {
   "mcpServers": {
     "sg-mrt-exits-mcp": {
       "command": "python",
-      "args": ["/absolute/path/to/sg-mrt-exits-mcp/main.py"],
-      "env": {
-        "API_BASE_URL": "https://api.jael.ee",
-        "API_USERNAME": "your_email@address.com",
-        "API_TOKEN": "t_your_token_here"
-      }
+      "args": ["/absolute/path/to/sg-mrt-exits-mcp/main.py"]
     }
   }
 }
@@ -141,12 +173,11 @@ sg-mrt-exits-mcp/
 
 ---
 
-## Updating the API endpoint
+## Updating the API Endpoint
 
 To switch to a different base URL or path without modifying code, set environment variables:
 
 ```bash
-# Example: switch to a staging endpoint
 API_BASE_URL=https://staging.api.jael.ee
 API_ENDPOINT_PATH=/JLEE/sg_lta_mrt_station_exit_geojson_api
 ```
@@ -159,4 +190,10 @@ The full URL is assembled at runtime by `config.get_api_url()`.
 
 Land Transport Authority. (2019). LTA MRT Station Exit (GEOJSON) (2026) [Dataset]. data.gov.sg. Retrieved April 14, 2026 from https://data.gov.sg/datasets/d_b39d3a0871985372d7e1637193335da5/view
 
-Dataset license: Free forever for personal or commercial use, under the Open Data Licence (https://data.gov.sg/open-data-licence).
+Dataset license: Free forever for personal or commercial use, under the [Open Data Licence](https://data.gov.sg/open-data-licence).
+
+---
+
+## License
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
