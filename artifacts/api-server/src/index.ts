@@ -1,3 +1,5 @@
+import { spawn } from "child_process";
+import path from "path";
 import app from "./app";
 import { logger } from "./lib/logger";
 
@@ -14,6 +16,48 @@ const port = Number(rawPort);
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
+
+// ── Spawn Python MCP server (production only) ──────────────────────────────────
+// In development the "MRT Exits MCP Server" workflow handles this separately.
+// In production that workflow does not run, so we start it here as a subprocess
+// so the proxy routes in app.ts have a target to forward to.
+if (process.env["NODE_ENV"] === "production") {
+  const mcpScript = path.join(process.cwd(), "sg-mrt-exits-mcp", "main.py");
+
+  const mcpProcess = spawn("python3", [mcpScript], {
+    env: {
+      ...process.env,
+      MCP_TRANSPORT: "streamable-http",
+      PORT: "8000",
+    },
+    stdio: "inherit",
+    cwd: process.cwd(),
+  });
+
+  mcpProcess.on("error", (err) => {
+    logger.error({ err }, "Failed to start MCP server subprocess");
+  });
+
+  mcpProcess.on("exit", (code, signal) => {
+    logger.warn({ code, signal }, "MCP server subprocess exited");
+  });
+
+  const cleanup = () => {
+    mcpProcess.kill("SIGTERM");
+  };
+  process.once("exit", cleanup);
+  process.once("SIGTERM", () => {
+    cleanup();
+    process.exit(0);
+  });
+  process.once("SIGINT", () => {
+    cleanup();
+    process.exit(0);
+  });
+
+  logger.info({ script: mcpScript }, "MCP server subprocess started");
+}
+// ── End MCP subprocess ─────────────────────────────────────────────────────────
 
 app.listen(port, (err) => {
   if (err) {

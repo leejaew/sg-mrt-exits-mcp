@@ -1,6 +1,8 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import { createProxyMiddleware } from "http-proxy-middleware";
+import type { ServerResponse } from "http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -26,6 +28,41 @@ app.use(
   }),
 );
 app.use(cors());
+
+// ── MCP reverse proxy ──────────────────────────────────────────────────────────
+// Forwards /mcp, /sse, /messages, and /.well-known to the FastMCP Python server
+// running on port 8000.  MUST be registered BEFORE express.json() so the raw
+// request body stream is not consumed before the proxy can forward it.
+const mcpProxy = createProxyMiddleware({
+  target: "http://127.0.0.1:8000",
+  changeOrigin: false,
+  on: {
+    error(err, _req, res) {
+      logger.warn({ err: (err as Error).message }, "MCP proxy error");
+      const r = res as ServerResponse;
+      if (!r.headersSent) {
+        r.writeHead(502, { "Content-Type": "application/json" });
+        r.end(
+          JSON.stringify({
+            error: "MCP server unavailable — please retry in a moment",
+          }),
+        );
+      }
+    },
+  },
+});
+
+const MCP_PATH_PREFIXES = ["/mcp", "/sse", "/messages", "/.well-known"];
+
+app.use((req, res, next) => {
+  const p = req.path ?? "/";
+  if (MCP_PATH_PREFIXES.some((prefix) => p === prefix || p.startsWith(prefix + "/"))) {
+    return mcpProxy(req, res, next);
+  }
+  next();
+});
+// ── End MCP proxy ──────────────────────────────────────────────────────────────
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
