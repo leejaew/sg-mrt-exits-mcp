@@ -358,18 +358,6 @@ export default function App() {
         {/* Footer */}
         <footer className="mt-16 pt-8 border-t border-gray-100 text-xs text-gray-400 flex flex-col gap-5">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <span>
-              Data source:{" "}
-              <a
-                href="https://api.jael.ee"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-500 hover:text-orange-500 transition-colors underline underline-offset-2"
-              >
-                api.jael.ee
-              </a>{" "}
-              — LTA MRT Station Exit GeoJSON API
-            </span>
             <span className="font-mono">
               <a
                 href="https://modelcontextprotocol.io"
