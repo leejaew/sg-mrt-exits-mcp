@@ -28,6 +28,15 @@ def get_api_url() -> str:
     path = API_ENDPOINT_PATH if API_ENDPOINT_PATH.startswith("/") else f"/{API_ENDPOINT_PATH}"
     return f"{base}{path}"
 
+# ── Cache ─────────────────────────────────────────────────────────────────────
+# How long (seconds) to cache the full exits dataset before re-fetching.
+# Override via CACHE_TTL_SECONDS env var. Default: 5 minutes.
+CACHE_TTL_SECONDS: int = int(os.environ.get("CACHE_TTL_SECONDS", "300"))
+
+# ── Outbound concurrency ──────────────────────────────────────────────────────
+# Maximum number of simultaneous outbound HTTP requests to the LTA API.
+API_MAX_CONCURRENCY: int = int(os.environ.get("API_MAX_CONCURRENCY", "5"))
+
 # ── Geocoding ────────────────────────────────────────────────────────────────
 NOMINATIM_BASE_URL: str = "https://nominatim.openstreetmap.org/search"
 NOMINATIM_USER_AGENT: str = "sg-mrt-exits-mcp/1.0"

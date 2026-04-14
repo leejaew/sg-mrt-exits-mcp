@@ -7,6 +7,7 @@ from geo_utils import (
     display_station_name,
     bounding_box_description,
 )
+from validators import validate_coordinates, validate_radius, validate_top_n
 
 
 async def find_nearest_exit_by_coordinates(
@@ -20,6 +21,10 @@ async def find_nearest_exit_by_coordinates(
     Fetches all exits and ranks by Haversine distance. Returns the top_n nearest
     exits with station name, exit code, and distance in metres.
     """
+    err = validate_coordinates(latitude, longitude) or validate_top_n(top_n)
+    if err:
+        return err
+
     exits = await fetch_all_exits()
     if isinstance(exits, str):
         return exits
@@ -52,6 +57,11 @@ async def find_nearest_exit_by_landmark(
     Examples: 'Jewel Changi Airport', 'NUS', 'Marina Bay Sands'.
     Geocodes the landmark via OpenStreetMap, then ranks all exits by distance.
     """
+    from validators import validate_string
+    err = validate_string(landmark_name, "landmark_name") or validate_top_n(top_n)
+    if err:
+        return err
+
     coords = await resolve_landmark_or_error(landmark_name)
     if isinstance(coords, str):
         return coords
@@ -93,13 +103,25 @@ async def find_exits_within_radius(
     Supply either (latitude + longitude) or landmark_name. Results are sorted
     by distance and include total count, station name, exit code, and distance.
     """
-    if latitude is None or longitude is None:
-        if not landmark_name:
-            return "Please provide either coordinates (latitude + longitude) or a landmark_name."
+    err = validate_radius(radius_metres)
+    if err:
+        return err
+
+    if latitude is not None and longitude is not None:
+        err = validate_coordinates(latitude, longitude)
+        if err:
+            return err
+    elif landmark_name:
+        from validators import validate_string
+        err = validate_string(landmark_name, "landmark_name")
+        if err:
+            return err
         coords = await resolve_landmark_or_error(landmark_name)
         if isinstance(coords, str):
             return coords
         latitude, longitude = coords
+    else:
+        return "Please provide either coordinates (latitude + longitude) or a landmark_name."
 
     exits = await fetch_all_exits()
     if isinstance(exits, str):
@@ -147,13 +169,25 @@ async def urban_planning_exit_density(
     Useful for urban planning, crowd modelling, or infrastructure assessment.
     Returns exit count, unique stations, spatial spread, and a density summary.
     """
-    if latitude is None or longitude is None:
-        if not landmark_name:
-            return "Please provide either coordinates (latitude + longitude) or a landmark_name."
+    err = validate_radius(radius_metres)
+    if err:
+        return err
+
+    if latitude is not None and longitude is not None:
+        err = validate_coordinates(latitude, longitude)
+        if err:
+            return err
+    elif landmark_name:
+        from validators import validate_string
+        err = validate_string(landmark_name, "landmark_name")
+        if err:
+            return err
         coords = await resolve_landmark_or_error(landmark_name)
         if isinstance(coords, str):
             return coords
         latitude, longitude = coords
+    else:
+        return "Please provide either coordinates (latitude + longitude) or a landmark_name."
 
     exits = await fetch_all_exits()
     if isinstance(exits, str):

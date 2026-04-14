@@ -7,6 +7,7 @@ from geo_utils import (
     display_station_name,
 )
 from maps_links import maps_link_block
+from validators import validate_coordinates, validate_radius, validate_top_n, validate_string
 
 
 async def _resolve_coords(
@@ -16,8 +17,14 @@ async def _resolve_coords(
 ) -> tuple[float, float] | str:
     """Helper: resolve a location from coords or landmark, returning error str on failure."""
     if latitude is not None and longitude is not None:
+        err = validate_coordinates(latitude, longitude)
+        if err:
+            return err
         return latitude, longitude
     if landmark_name:
+        err = validate_string(landmark_name, "landmark_name")
+        if err:
+            return err
         return await resolve_landmark_or_error(landmark_name)
     return "Please provide either coordinates (latitude + longitude) or a landmark_name."
 
@@ -36,6 +43,10 @@ async def retail_proximity_analysis(
     Returns total exits, breakdown by station, nearest exit and distance, and a
     plain-text summary suited to retail or real estate contexts.
     """
+    err = validate_radius(radius_metres)
+    if err:
+        return err
+
     coords = await _resolve_coords(latitude, longitude, landmark_name)
     if isinstance(coords, str):
         return coords
@@ -103,6 +114,10 @@ async def accessibility_check(
     nearby exits and directs users to LTA's official accessibility resources to
     verify barrier-free routes.
     """
+    err = validate_radius(radius_metres)
+    if err:
+        return err
+
     coords = await _resolve_coords(latitude, longitude, landmark_name)
     if isinstance(coords, str):
         return coords
@@ -155,6 +170,10 @@ async def emergency_response_exits(
     Returns ranked exits with distance and a Google Maps directions link for each,
     to assist rapid navigation.
     """
+    err = validate_top_n(top_n)
+    if err:
+        return err
+
     coords = await _resolve_coords(latitude, longitude, landmark_name)
     if isinstance(coords, str):
         return coords
@@ -198,6 +217,10 @@ async def logistics_delivery_planning(
     Useful for courier pickup zones, delivery locker positioning, or pedestrian
     transit access assessment for delivery addresses.
     """
+    err = validate_radius(radius_metres)
+    if err:
+        return err
+
     coords = await _resolve_coords(latitude, longitude, landmark_name)
     if isinstance(coords, str):
         return coords
@@ -252,6 +275,10 @@ async def tourist_guide_exits(
     Returns the closest exits with distances and a friendly plain-text description
     of which exit to use. Set include_map_links to true to add Google Maps links.
     """
+    err = validate_string(destination, "destination")
+    if err:
+        return err
+
     coords = await resolve_landmark_or_error(destination)
     if isinstance(coords, str):
         return coords
@@ -308,6 +335,19 @@ async def commuter_exit_comparison(
     If a destination is provided, exits are ranked by distance to it.
     Otherwise all exits are listed with plain-text coordinates.
     """
+    err = validate_string(station_name, "station_name")
+    if err:
+        return err
+
+    if destination_latitude is not None and destination_longitude is not None:
+        err = validate_coordinates(destination_latitude, destination_longitude)
+        if err:
+            return err
+    elif destination_landmark:
+        err = validate_string(destination_landmark, "destination_landmark")
+        if err:
+            return err
+
     exits = await fetch_exits(station_name=station_name)
     if isinstance(exits, str):
         return exits
@@ -319,7 +359,6 @@ async def commuter_exit_comparison(
 
     display = display_station_name(exits[0]["station_na"])
 
-    # Resolve destination coordinates if any
     dest_lat: float | None = None
     dest_lng: float | None = None
 
