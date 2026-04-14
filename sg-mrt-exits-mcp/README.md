@@ -75,6 +75,7 @@ These environment variables have sensible defaults and do not need to be set unl
 |----------|---------|-------------|
 | `CACHE_TTL_SECONDS` | `300` | How long (in seconds) the full exit dataset is cached in memory before the next API fetch. Lower values keep data fresher; higher values reduce API calls. |
 | `API_MAX_CONCURRENCY` | `5` | Maximum simultaneous outbound HTTP requests to the LTA API. |
+| `MCP_TRANSPORT` | `stdio` | Transport protocol the server runs on. Options: `stdio` (local clients), `sse` (HTTP/SSE), `streamable-http` (HTTP/Streamable HTTP). |
 
 ### 4. Run the server
 
@@ -82,13 +83,23 @@ These environment variables have sensible defaults and do not need to be set unl
 python main.py
 ```
 
-The server communicates over **stdio** (standard MCP transport), making it compatible with Claude Desktop, the Claude API, Manus AI, and any MCP-compliant client.
+By default the server runs over **stdio**, which is correct for local clients (Claude Desktop, Claude API). To serve over HTTP for web-based or deployed clients, set `MCP_TRANSPORT` before starting:
+
+```bash
+# Streamable HTTP (Manus AI, newer clients)
+MCP_TRANSPORT=streamable-http python main.py
+
+# SSE (Claude.ai, Cursor, Windsurf, older clients)
+MCP_TRANSPORT=sse python main.py
+```
 
 ---
 
 ## Connection Config
 
 ### Manus AI — Streamable HTTP (recommended, tested)
+
+Requires the server to be deployed and started with `MCP_TRANSPORT=streamable-http`. The `/mcp` endpoint is then available at your deployment URL.
 
 ```json
 {
@@ -101,9 +112,11 @@ The server communicates over **stdio** (standard MCP transport), making it compa
 }
 ```
 
-### SSE — Claude.ai, Cursor, Windsurf, and other SSE-compatible clients
+### SSE — Claude.ai, Cursor, Windsurf, and other SSE-compatible clients *(not tested)*
 
-SSE (Server-Sent Events) is the older HTTP transport, superseded by Streamable HTTP but still widely supported. When deployed, the server exposes the SSE endpoint at `/sse`.
+> **Note:** This configuration has not been tested. SSE (Server-Sent Events) is the older HTTP transport, superseded by Streamable HTTP but still widely supported.
+
+Requires the server to be deployed and started with `MCP_TRANSPORT=sse`. The `/sse` endpoint is then available at your deployment URL.
 
 ```json
 {
@@ -132,6 +145,8 @@ Some clients (e.g. Cursor) omit the `type` key and infer SSE from the URL:
 
 > **Note:** This configuration has not been tested. It should work with any MCP client that supports stdio transport, but your mileage may vary.
 
+No `MCP_TRANSPORT` change needed — stdio is the default.
+
 ```json
 {
   "mcpServers": {
@@ -149,6 +164,8 @@ Credentials (`API_BASE_URL`, `API_USERNAME`, `API_TOKEN`) are inherited from the
 ### Claude Desktop *(not tested)*
 
 > **Note:** This configuration has not been tested. The format follows the Claude Desktop MCP documentation but has not been verified end-to-end.
+
+No `MCP_TRANSPORT` change needed — stdio is the default.
 
 ```json
 {
@@ -223,6 +240,7 @@ sg-mrt-exits-mcp/
 ├── line_lookup.py           # Static MRT line → station mapping dictionary
 ├── validators.py            # Input validation (coordinates, radius, top_n, strings)
 ├── tools/
+│   ├── __init__.py          # Empty package marker
 │   ├── search_tools.py      # search_exits_by_station, get_exit_detail
 │   ├── spatial_tools.py     # find_nearest_exit_by_coordinates, find_nearest_exit_by_landmark,
 │   │                        #   find_exits_within_radius, urban_planning_exit_density
