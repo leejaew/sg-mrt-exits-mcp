@@ -264,13 +264,13 @@ function ToolCard({ tool, index }: { tool: typeof TOOLS[0]; index: number }) {
       className="rounded-lg px-5 py-4 flex gap-4 items-start border border-[#1e2433]"
       style={{ background: "#111827" }}
     >
-      <span className="text-sm font-mono text-[#4b5563] mt-0.5 shrink-0 w-6 text-right">
+      <span className="text-sm font-mono text-white mt-0.5 shrink-0 w-6 text-right">
         {String(index + 1).padStart(2, "0")}
       </span>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2 mb-1.5">
           <span className="font-mono text-sm text-[#38bdf8] font-medium">{tool.name}</span>
-          <span className="font-mono text-xs text-[#4b5563] bg-[#1f2937] px-2 py-0.5 rounded">
+          <span className="font-mono text-xs text-white bg-[#1f2937] px-2 py-0.5 rounded">
             {tool.tag}
           </span>
         </div>
