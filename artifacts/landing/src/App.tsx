@@ -313,7 +313,7 @@ export default function App() {
           </div>
           <div className="flex items-center gap-1.5 bg-gray-900 text-gray-200 text-xs px-3 py-1.5 rounded-full font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block animate-pulse" />
-            HTTP · SSE · STDIO · Manus AI
+            HTTP · SSE · STDIO
           </div>
         </div>
       </header>
