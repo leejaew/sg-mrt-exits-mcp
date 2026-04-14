@@ -270,7 +270,7 @@ export default function App() {
             <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
               API_TOKEN
             </span>{" "}
-            for the LTA SheetLabs endpoint.
+            for the api.jael.ee endpoint.
           </p>
         </section>
 

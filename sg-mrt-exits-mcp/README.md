@@ -55,7 +55,7 @@ API_USERNAME=your_email@address.com
 API_TOKEN=t_your_token_here
 ```
 
-All three are required. `API_BASE_URL` is the base URL of the LTA SheetLabs endpoint. `API_USERNAME` and `API_TOKEN` are your SheetLabs credentials (see [https://sheetlabs.com](https://sheetlabs.com)).
+All three are required. `API_BASE_URL` is the base URL of the api.jael.ee endpoint. `API_USERNAME` and `API_TOKEN` are your api.jael.ee credentials.
 
 The endpoint path can also be overridden via `API_ENDPOINT_PATH` if needed (default: `/JLEE/sg_lta_mrt_station_exit_geojson_api`).
 

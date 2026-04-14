@@ -44,12 +44,13 @@ Exposes **15 tools** for AI assistants to answer real-world questions about Sing
 - **Package manager**: uv (via Replit)
 
 ### Secrets Required
-- `API_USERNAME` — SheetLabs API email
-- `API_TOKEN` — SheetLabs API token
+- `API_BASE_URL` — base URL of the api.jael.ee endpoint (required)
+- `API_USERNAME` — api.jael.ee API username
+- `API_TOKEN` — api.jael.ee API token
 
 ### API Endpoint Configuration
 Fully configurable via env vars (no code changes needed):
-- `API_BASE_URL` — default: `https://api.jael.ee`
+- `API_BASE_URL` — base URL (required, stored in Replit Secrets)
 - `API_ENDPOINT_PATH` — default: `/JLEE/sg_lta_mrt_station_exit_geojson_api`
 
 Full URL assembled at runtime by `config.get_api_url()`.

@@ -99,7 +99,7 @@ async def _fetch_raw(params: dict) -> list[dict] | str:
 
 async def fetch_exits(station_name: str | None = None) -> list[dict] | str:
     """
-    Fetch MRT exit records from the LTA SheetLabs API.
+    Fetch MRT exit records from the api.jael.ee LTA MRT Station Exit API.
 
     Search is always **case-insensitive**. The query is normalised (stripped and
     uppercased) via normalize_station_query() before any processing, so callers

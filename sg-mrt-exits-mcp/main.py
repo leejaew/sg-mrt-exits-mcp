@@ -8,10 +8,10 @@ The server uses stdio transport (default for MCP), making it compatible with
 Claude Desktop, Claude API tool-use, and any MCP-compliant client.
 
 Configuration is read from environment variables (Replit Secrets or .env):
-    API_USERNAME       — SheetLabs API email
-    API_TOKEN          — SheetLabs API token
-    API_BASE_URL       — (optional) override API base URL
-    API_ENDPOINT_PATH  — (optional) override API endpoint path
+    API_BASE_URL       — base URL of the api.jael.ee endpoint (required)
+    API_USERNAME       — api.jael.ee API username
+    API_TOKEN          — api.jael.ee API token
+    API_ENDPOINT_PATH  — (optional) override the API endpoint path
 """
 import sys
 import os
