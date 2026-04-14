@@ -12,6 +12,13 @@ _NOMINATIM_LOCK: asyncio.Semaphore = asyncio.Semaphore(1)
 _last_nominatim_call: float = 0.0
 _NOMINATIM_MIN_INTERVAL: float = 1.0  # seconds
 
+# ── Landmark coordinate cache ─────────────────────────────────────────────────
+# Geographic coordinates of named places don't change, so successful lookups
+# are cached indefinitely for the lifetime of the process. Only successful
+# results are cached — failed lookups (None) are not stored so that a user
+# who retries with a corrected name gets a fresh attempt.
+_landmark_cache: dict[str, tuple[float, float]] = {}
+
 
 async def resolve_landmark(landmark_name: str) -> tuple[float, float] | None:
     """
@@ -19,15 +26,27 @@ async def resolve_landmark(landmark_name: str) -> tuple[float, float] | None:
 
     Always appends ', Singapore' to constrain results.
     Enforces Nominatim's 1 req/sec rate limit.
+    Caches successful results in memory for the process lifetime — coordinates
+    of named places don't change, so repeated lookups of the same landmark
+    skip the rate-limit wait entirely and return in < 0.1 ms.
     Returns (latitude, longitude) or None if the lookup fails.
     """
     global _last_nominatim_call
+
+    # Cache hit: return immediately without touching Nominatim
+    cache_key = landmark_name.strip().lower()
+    if cache_key in _landmark_cache:
+        return _landmark_cache[cache_key]
 
     query = f"{landmark_name}, Singapore"
     params = {"q": query, "format": "json", "limit": 1}
     headers = {"User-Agent": NOMINATIM_USER_AGENT}
 
     async with _NOMINATIM_LOCK:
+        # Re-check inside lock: another coroutine may have just populated it
+        if cache_key in _landmark_cache:
+            return _landmark_cache[cache_key]
+
         now = time.monotonic()
         elapsed = now - _last_nominatim_call
         if elapsed < _NOMINATIM_MIN_INTERVAL:
@@ -42,7 +61,9 @@ async def resolve_landmark(landmark_name: str) -> tuple[float, float] | None:
                 if results:
                     lat = float(results[0]["lat"])
                     lon = float(results[0]["lon"])
-                    return lat, lon
+                    coords = (lat, lon)
+                    _landmark_cache[cache_key] = coords  # cache on success only
+                    return coords
                 return None
 
         except httpx.TimeoutException:

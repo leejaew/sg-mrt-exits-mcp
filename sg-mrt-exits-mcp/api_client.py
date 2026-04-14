@@ -139,11 +139,16 @@ async def fetch_exits(station_name: str | None = None) -> list[dict] | str:
         - Suffix glob: '*hill'          → client-side fallback (regex)
         - Infix glob:  '*central*'      → client-side fallback (regex)
 
-    Two-step search strategy:
-        Step 1 — send the normalised (uppercased) query directly to the API.
-                 This handles exact names and prefix globs efficiently.
-        Step 2 — if the API returns 0 results, fetch all exits (from cache)
-                 and apply the wildcard pattern locally (re.IGNORECASE).
+    Search strategy (three tiers, fastest first):
+        Tier 0 — Cache hit: if the full-dataset cache is warm, filter it in
+                 memory using the regex pattern (~0.1 ms, zero network I/O).
+                 Only falls through if the cache is cold or returns no matches
+                 (handles brand-new stations not yet cached).
+        Tier 1 — API filtered query: send the normalised query to the API.
+                 Handles exact names and covers the cold-cache case.
+        Tier 2 — Full-dataset fallback: fetch all exits (populates cache) and
+                 apply the regex locally. Handles leading wildcards and partial
+                 text that the API does not support natively.
 
     Returns:
         A list of parsed exit dicts, or a plain-text error string on failure.
@@ -152,8 +157,17 @@ async def fetch_exits(station_name: str | None = None) -> list[dict] | str:
         return await fetch_all_exits()
 
     normalised = normalize_station_query(station_name)
+    pattern = _wildcard_to_regex(normalised)
 
-    # Step 1: Try the API with the normalised query
+    # Tier 0: Cache warm — filter in memory, no network round-trip
+    now = time.monotonic()
+    if _cache["data"] is not None and (now - _cache["ts"]) < CACHE_TTL_SECONDS:
+        matches = [e for e in _cache["data"] if pattern.search(e.get("station_na", ""))]
+        if matches:
+            return matches
+        # No cache match → could be a brand-new station; fall through to API
+
+    # Tier 1: Cache cold or no match — try filtered API query
     raw = await _fetch_raw({"properties[STATION_NA]": normalised})
     if isinstance(raw, str):
         return raw
@@ -161,12 +175,11 @@ async def fetch_exits(station_name: str | None = None) -> list[dict] | str:
     if raw:
         return _parse_records(raw)
 
-    # Step 2: Client-side fallback — use cached full dataset + regex
+    # Tier 2: Full-dataset fallback (also populates the cache)
     all_exits = await fetch_all_exits()
     if isinstance(all_exits, str):
         return all_exits
 
-    pattern = _wildcard_to_regex(normalised)
     return [e for e in all_exits if pattern.search(e.get("station_na", ""))]
 
 
