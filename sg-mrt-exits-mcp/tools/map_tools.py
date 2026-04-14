@@ -1,6 +1,7 @@
 from api_client import fetch_exits
 from geo_utils import format_coords_plain, display_station_name
 from maps_links import maps_link_block
+from validators import validate_string
 
 
 async def get_exit_map_view(station_name: str, exit_code: str) -> str:
@@ -10,6 +11,10 @@ async def get_exit_map_view(station_name: str, exit_code: str) -> str:
     Use this tool only when the user explicitly requests a map view or directions.
     Returns the plain-text location description plus both Google Maps links.
     """
+    err = validate_string(station_name, "station_name") or validate_string(exit_code, "exit_code")
+    if err:
+        return err
+
     result = await fetch_exits(station_name=station_name)
     if isinstance(result, str):
         return result

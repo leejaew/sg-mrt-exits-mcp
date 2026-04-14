@@ -27,6 +27,26 @@ def haversine_meters(lat1: float, lng1: float, lat2: float, lng2: float) -> floa
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
+def nearby_exits(
+    exits: list[dict],
+    lat: float,
+    lng: float,
+    radius_metres: int,
+) -> list[tuple[dict, float]]:
+    """
+    Return all exits within radius_metres of (lat, lng), sorted by ascending distance.
+
+    Computes all distances in one pass, filters before sorting so we sort only
+    the matching subset rather than the full dataset. Each element is a
+    (exit_dict, distance_metres) tuple.
+    """
+    with_dist = [(e, haversine_meters(lat, lng, e["lat"], e["lng"])) for e in exits]
+    return sorted(
+        [(e, d) for e, d in with_dist if d <= radius_metres],
+        key=lambda x: x[1],
+    )
+
+
 def format_coords_plain(lat: float, lng: float) -> str:
     """Return coordinates in human-readable plain text to 4 decimal places."""
     lat_dir = "N" if lat >= 0 else "S"
@@ -84,8 +104,10 @@ def bounding_box_description(exits: list[dict]) -> str:
         return "No exits to analyse."
     lats = [e["lat"] for e in exits]
     lngs = [e["lng"] for e in exits]
-    ns_span = haversine_meters(min(lats), lngs[0], max(lats), lngs[0])
-    ew_span = haversine_meters(lats[0], min(lngs), lats[0], max(lngs))
+    mid_lng = (min(lngs) + max(lngs)) / 2
+    mid_lat = (min(lats) + max(lats)) / 2
+    ns_span = haversine_meters(min(lats), mid_lng, max(lats), mid_lng)
+    ew_span = haversine_meters(mid_lat, min(lngs), mid_lat, max(lngs))
     return (
         f"Exits span approximately {format_distance(ns_span)} north to south "
         f"and {format_distance(ew_span)} east to west."

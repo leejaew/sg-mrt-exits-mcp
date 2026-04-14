@@ -29,7 +29,10 @@ async def main() -> None:
         import geocoding
         import api_client
         import line_lookup
-        from tools import search_tools, map_tools, spatial_tools, line_tools, use_case_tools
+        from tools import (
+            search_tools, map_tools, spatial_tools,
+            line_tools, location_tools, navigation_tools,
+        )
         import server
         print("    OK — all modules loaded")
         print(f"    API URL: {config.get_api_url()}")
@@ -82,7 +85,6 @@ async def main() -> None:
     # ── 5. Registered tools ────────────────────────────────────────────────
     print("\n[5] Registered MCP tools:")
     try:
-        # FastMCP stores tools in its internal tool registry
         tool_names = list(server.mcp._tool_manager._tools.keys())
         for name in sorted(tool_names):
             print(f"    • {name}")

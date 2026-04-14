@@ -28,7 +28,6 @@ async def resolve_landmark(landmark_name: str) -> tuple[float, float] | None:
     headers = {"User-Agent": NOMINATIM_USER_AGENT}
 
     async with _NOMINATIM_LOCK:
-        # Enforce 1 req/sec rate limit
         now = time.monotonic()
         elapsed = now - _last_nominatim_call
         if elapsed < _NOMINATIM_MIN_INTERVAL:
@@ -79,3 +78,34 @@ async def resolve_landmark_or_error(landmark_name: str) -> tuple[float, float] |
             "Please try a more specific name or provide coordinates directly."
         )
     return coords
+
+
+async def resolve_coords_or_error(
+    latitude: float | None,
+    longitude: float | None,
+    landmark_name: str | None,
+) -> tuple[float, float] | str:
+    """
+    Unified location resolver used by all tools that accept either coordinates
+    or a landmark name.
+
+    Priority: explicit coordinates → landmark name → error.
+    Coordinates are validated against Singapore's bounding box before returning.
+
+    Returns (lat, lng) on success, or a plain-text error string on failure.
+    """
+    from validators import validate_coordinates, validate_string
+
+    if latitude is not None and longitude is not None:
+        err = validate_coordinates(latitude, longitude)
+        if err:
+            return err
+        return latitude, longitude
+
+    if landmark_name:
+        err = validate_string(landmark_name, "landmark_name")
+        if err:
+            return err
+        return await resolve_landmark_or_error(landmark_name)
+
+    return "Please provide either coordinates (latitude + longitude) or a landmark_name."

@@ -1,13 +1,14 @@
 from api_client import fetch_all_exits
-from geocoding import resolve_landmark_or_error
+from geocoding import resolve_coords_or_error, resolve_landmark_or_error
 from geo_utils import (
     haversine_meters,
     format_coords_plain,
     format_distance,
     display_station_name,
     bounding_box_description,
+    nearby_exits,
 )
-from validators import validate_coordinates, validate_radius, validate_top_n
+from validators import validate_coordinates, validate_radius, validate_top_n, validate_string
 
 
 async def find_nearest_exit_by_coordinates(
@@ -40,10 +41,7 @@ async def find_nearest_exit_by_coordinates(
     for i, e in enumerate(ranked, 1):
         dist = haversine_meters(latitude, longitude, e["lat"], e["lng"])
         display = display_station_name(e["station_na"])
-        lines.append(
-            f"{i}. {display} — {e['exit_code']} "
-            f"({format_distance(dist)})"
-        )
+        lines.append(f"{i}. {display} — {e['exit_code']} ({format_distance(dist)})")
     return "\n".join(lines)
 
 
@@ -57,7 +55,6 @@ async def find_nearest_exit_by_landmark(
     Examples: 'Jewel Changi Airport', 'NUS', 'Marina Bay Sands'.
     Geocodes the landmark via OpenStreetMap, then ranks all exits by distance.
     """
-    from validators import validate_string
     err = validate_string(landmark_name, "landmark_name") or validate_top_n(top_n)
     if err:
         return err
@@ -85,9 +82,7 @@ async def find_nearest_exit_by_landmark(
     for i, e in enumerate(ranked, 1):
         dist = haversine_meters(lat, lng, e["lat"], e["lng"])
         display = display_station_name(e["station_na"])
-        lines.append(
-            f"{i}. {display} — {e['exit_code']} ({format_distance(dist)})"
-        )
+        lines.append(f"{i}. {display} — {e['exit_code']} ({format_distance(dist)})")
     return "\n".join(lines)
 
 
@@ -107,21 +102,10 @@ async def find_exits_within_radius(
     if err:
         return err
 
-    if latitude is not None and longitude is not None:
-        err = validate_coordinates(latitude, longitude)
-        if err:
-            return err
-    elif landmark_name:
-        from validators import validate_string
-        err = validate_string(landmark_name, "landmark_name")
-        if err:
-            return err
-        coords = await resolve_landmark_or_error(landmark_name)
-        if isinstance(coords, str):
-            return coords
-        latitude, longitude = coords
-    else:
-        return "Please provide either coordinates (latitude + longitude) or a landmark_name."
+    coords = await resolve_coords_or_error(latitude, longitude, landmark_name)
+    if isinstance(coords, str):
+        return coords
+    lat, lng = coords
 
     exits = await fetch_all_exits()
     if isinstance(exits, str):
@@ -129,31 +113,22 @@ async def find_exits_within_radius(
     if not exits:
         return "No MRT exit data is available at this time."
 
-    nearby = [
-        (e, haversine_meters(latitude, longitude, e["lat"], e["lng"]))
-        for e in exits
-    ]
-    nearby = [(e, d) for e, d in nearby if d <= radius_metres]
-    nearby.sort(key=lambda x: x[1])
+    close = nearby_exits(exits, lat, lng, radius_metres)
+    location_desc = landmark_name if landmark_name else format_coords_plain(lat, lng)
 
-    location_desc = (
-        landmark_name if landmark_name else format_coords_plain(latitude, longitude)
-    )
-
-    if not nearby:
+    if not close:
         return (
             f"No MRT exits found within {format_distance(radius_metres)} of "
             f"'{location_desc}'."
         )
 
     lines = [
-        f"Found {len(nearby)} exit(s) within {format_distance(radius_metres)} "
+        f"Found {len(close)} exit(s) within {format_distance(radius_metres)} "
         f"of '{location_desc}':\n"
     ]
-    for e, dist in nearby:
+    for e, dist in close:
         display = display_station_name(e["station_na"])
         lines.append(f"  • {display} — {e['exit_code']} ({format_distance(dist)})")
-
     return "\n".join(lines)
 
 
@@ -173,21 +148,10 @@ async def urban_planning_exit_density(
     if err:
         return err
 
-    if latitude is not None and longitude is not None:
-        err = validate_coordinates(latitude, longitude)
-        if err:
-            return err
-    elif landmark_name:
-        from validators import validate_string
-        err = validate_string(landmark_name, "landmark_name")
-        if err:
-            return err
-        coords = await resolve_landmark_or_error(landmark_name)
-        if isinstance(coords, str):
-            return coords
-        latitude, longitude = coords
-    else:
-        return "Please provide either coordinates (latitude + longitude) or a landmark_name."
+    coords = await resolve_coords_or_error(latitude, longitude, landmark_name)
+    if isinstance(coords, str):
+        return coords
+    lat, lng = coords
 
     exits = await fetch_all_exits()
     if isinstance(exits, str):
@@ -195,32 +159,22 @@ async def urban_planning_exit_density(
     if not exits:
         return "No MRT exit data is available at this time."
 
-    nearby = [
-        (e, haversine_meters(latitude, longitude, e["lat"], e["lng"]))
-        for e in exits
-    ]
-    nearby = [(e, d) for e, d in nearby if d <= radius_metres]
-    nearby.sort(key=lambda x: x[1])
+    close = nearby_exits(exits, lat, lng, radius_metres)
+    location_desc = landmark_name if landmark_name else format_coords_plain(lat, lng)
 
-    location_desc = (
-        landmark_name if landmark_name else format_coords_plain(latitude, longitude)
-    )
-
-    if not nearby:
+    if not close:
         return (
             f"No MRT exits found within {format_distance(radius_metres)} "
             f"of '{location_desc}'."
         )
 
-    exit_list = [e for e, _ in nearby]
+    exit_list = [e for e, _ in close]
     unique_stations = sorted({e["station_na"] for e in exit_list})
     station_display = [display_station_name(s) for s in unique_stations]
     bbox = bounding_box_description(exit_list)
 
-    total = len(nearby)
+    total = len(close)
     station_count = len(unique_stations)
-    area_m2 = 3.14159 * (radius_metres ** 2)
-    density = area_m2 / total if total > 0 else 0
     avg_spacing = (radius_metres * 2) / (total ** 0.5) if total > 0 else 0
 
     return (
