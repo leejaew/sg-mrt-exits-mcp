@@ -320,7 +320,7 @@ export default function App() {
       {/* Hero */}
       <main className="max-w-3xl mx-auto px-6 pt-12 pb-20">
         <h1 className="text-3xl font-bold text-gray-900 leading-snug mb-4">
-          AI-ready access to Singapore's MRT station exits
+          MCP server for Singapore's MRT station exits
         </h1>
         <p className="text-gray-600 leading-relaxed mb-12 text-base">
           This{" "}
