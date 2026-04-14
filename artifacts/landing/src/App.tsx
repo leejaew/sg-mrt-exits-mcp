@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+type Transport = "http" | "sse" | "stdio";
+
 const TOOLS = [
   {
     name: "search_exits_by_station",
@@ -93,19 +95,70 @@ const TOOLS = [
   },
 ];
 
-const CONFIG_JSON = `{
-  "mcpServers": {
-    "sg-mrt-exits": {
-      "command": "python3",
-      "args": ["/path/to/sg-mrt-exits-mcp/main.py"],
-      "env": {
-        "API_BASE_URL": "https://api.jael.ee",
-        "API_USERNAME": "your-username",
-        "API_TOKEN": "your-api-token"
-      }
-    }
+const TRANSPORT_CONFIGS: Record<Transport, string> = {
+  http: `{
+  "type": "http",
+  "url": "https://your-deployed-mcp-server.com/mcp"
+}`,
+  sse: `{
+  "type": "sse",
+  "url": "https://your-deployed-mcp-server.com/sse"
+}`,
+  stdio: `{
+  "type": "stdio",
+  "command": "python3",
+  "args": ["/path/to/sg-mrt-exits-mcp/main.py"],
+  "env": {
+    "API_BASE_URL": "https://api.jael.ee",
+    "API_USERNAME": "your-username",
+    "API_TOKEN": "your-api-token"
   }
-}`;
+}`,
+};
+
+const TRANSPORT_HINTS: Record<Transport, React.ReactNode> = {
+  http: (
+    <>
+      Paste this into Manus AI's custom MCP settings{" "}
+      <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
+        Settings → MCP → Custom
+      </span>
+      . Replace the URL with your deployed MCP server endpoint.
+    </>
+  ),
+  sse: (
+    <>
+      Paste this into Manus AI's custom MCP settings{" "}
+      <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
+        Settings → MCP → Custom
+      </span>
+      . Replace the URL with your deployed SSE endpoint.
+    </>
+  ),
+  stdio: (
+    <>
+      Paste this into Manus AI's custom MCP settings or use with any stdio-compatible client. Replace{" "}
+      <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
+        /path/to/
+      </span>{" "}
+      with the actual path and fill in your{" "}
+      <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
+        API_USERNAME
+      </span>{" "}
+      and{" "}
+      <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
+        API_TOKEN
+      </span>{" "}
+      for the api.jael.ee endpoint.
+    </>
+  ),
+};
+
+const TRANSPORT_LABELS: Record<Transport, string> = {
+  http: "HTTP",
+  sse: "SSE",
+  stdio: "STDIO",
+};
 
 function SyntaxLine({ text }: { text: string }) {
   const parts: { text: string; cls: string }[] = [];
@@ -138,24 +191,43 @@ function SyntaxLine({ text }: { text: string }) {
   );
 }
 
-function CodeBlock() {
+function CodeBlock({ transport, onTransportChange }: { transport: Transport; onTransportChange: (t: Transport) => void }) {
   const [copied, setCopied] = useState(false);
+  const config = TRANSPORT_CONFIGS[transport];
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(CONFIG_JSON);
+    await navigator.clipboard.writeText(config);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const lines = CONFIG_JSON.split("\n");
+  const lines = config.split("\n");
+  const transports: Transport[] = ["http", "sse", "stdio"];
 
   return (
     <div className="rounded-lg overflow-hidden border border-[#30363d]" style={{ background: "#0d1117" }}>
-      <div className="flex items-center justify-between px-4 py-2 border-b border-[#30363d]">
-        <span className="text-xs text-[#8b949e] font-mono">Claude Desktop — claude_desktop_config.json</span>
+      <div className="flex items-center justify-between px-4 pt-3 pb-0 border-b border-[#30363d]">
+        <div className="flex items-center gap-0">
+          {transports.map((t) => (
+            <button
+              key={t}
+              onClick={() => onTransportChange(t)}
+              className={`text-xs font-mono px-3 py-2 border-b-2 transition-colors cursor-pointer ${
+                transport === t
+                  ? "border-[#f97316] text-[#f97316]"
+                  : "border-transparent text-[#8b949e] hover:text-[#c9d1d9]"
+              }`}
+            >
+              {TRANSPORT_LABELS[t]}
+            </button>
+          ))}
+          <span className="text-[10px] text-[#4b5563] font-mono ml-3 mb-2 self-end">
+            Manus AI · Custom MCP
+          </span>
+        </div>
         <button
           onClick={handleCopy}
-          className="text-xs px-3 py-1 rounded text-[#8b949e] border border-[#30363d] hover:border-[#58a6ff] hover:text-[#58a6ff] transition-colors cursor-pointer"
+          className="text-xs px-3 py-1 mb-2 rounded text-[#8b949e] border border-[#30363d] hover:border-[#f97316] hover:text-[#f97316] transition-colors cursor-pointer self-end"
         >
           {copied ? "Copied!" : "Copy"}
         </button>
@@ -204,6 +276,8 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const [transport, setTransport] = useState<Transport>("http");
+
   return (
     <div className="min-h-screen bg-white text-gray-900">
       {/* Nav */}
@@ -226,7 +300,7 @@ export default function App() {
           </div>
           <div className="flex items-center gap-1.5 bg-gray-900 text-gray-200 text-xs px-3 py-1.5 rounded-full font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block animate-pulse" />
-            stdio · Claude Desktop
+            HTTP · SSE · STDIO · Manus AI
           </div>
         </div>
       </header>
@@ -252,25 +326,9 @@ export default function App() {
         {/* Connect section */}
         <section className="mb-12">
           <SectionLabel>Connect your AI agent</SectionLabel>
-          <CodeBlock />
+          <CodeBlock transport={transport} onTransportChange={setTransport} />
           <p className="mt-3 text-sm text-gray-500">
-            Add this to your{" "}
-            <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
-              claude_desktop_config.json
-            </span>{" "}
-            and replace the{" "}
-            <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
-              /path/to/
-            </span>{" "}
-            prefix and credentials with your own. The server requires{" "}
-            <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
-              API_USERNAME
-            </span>{" "}
-            and{" "}
-            <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
-              API_TOKEN
-            </span>{" "}
-            for the api.jael.ee endpoint.
+            {TRANSPORT_HINTS[transport]}
           </p>
         </section>
 
