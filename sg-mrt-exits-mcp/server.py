@@ -3,7 +3,12 @@ MCP server setup and tool registration for sg-mrt-exits-mcp.
 
 All 15 tools are registered here by importing each tools module and
 calling its register() function with the shared FastMCP instance.
+
+host and port are read from environment variables at construction time.
+main.py sets FASTMCP_HOST and FASTMCP_PORT before importing this module
+so that HTTP transports bind correctly in deployed environments.
 """
+import os
 from mcp.server.fastmcp import FastMCP
 from config import MCP_SERVER_NAME
 
@@ -14,7 +19,11 @@ from tools import line_tools
 from tools import location_tools
 from tools import navigation_tools
 
-mcp = FastMCP(MCP_SERVER_NAME)
+mcp = FastMCP(
+    MCP_SERVER_NAME,
+    host=os.environ.get("FASTMCP_HOST", "127.0.0.1"),
+    port=int(os.environ.get("FASTMCP_PORT", "8000")),
+)
 
 # ── Tool registration ─────────────────────────────────────────────────────────
 search_tools.register(mcp)     # search_exits_by_station, get_exit_detail
