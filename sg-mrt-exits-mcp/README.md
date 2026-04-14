@@ -178,7 +178,7 @@ sg-mrt-exits-mcp/
 To switch to a different base URL or path without modifying code, set environment variables:
 
 ```bash
-API_BASE_URL=https://staging.api.jael.ee
+API_BASE_URL=https://api.jael.ee
 API_ENDPOINT_PATH=/JLEE/sg_lta_mrt_station_exit_geojson_api
 ```
 
