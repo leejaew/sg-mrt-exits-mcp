@@ -99,6 +99,7 @@ const CONFIG_JSON = `{
       "command": "python3",
       "args": ["/path/to/sg-mrt-exits-mcp/main.py"],
       "env": {
+        "API_BASE_URL": "https://api.jael.ee",
         "API_USERNAME": "your-username",
         "API_TOKEN": "your-api-token"
       }
@@ -284,29 +285,56 @@ export default function App() {
         </section>
 
         {/* Footer */}
-        <footer className="mt-16 pt-8 border-t border-gray-100 text-xs text-gray-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-          <span>
-            Data source:{" "}
-            <a
-              href="https://api.jael.ee"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-500 hover:text-orange-500 transition-colors underline underline-offset-2"
-            >
-              api.jael.ee
-            </a>{" "}
-            — LTA MRT Station Exit GeoJSON API
-          </span>
-          <span className="font-mono">
-            <a
-              href="https://modelcontextprotocol.io"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-500 hover:text-orange-500 transition-colors underline underline-offset-2"
-            >
-              MCP Specification
-            </a>
-          </span>
+        <footer className="mt-16 pt-8 border-t border-gray-100 text-xs text-gray-400 flex flex-col gap-5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <span>
+              Data source:{" "}
+              <a
+                href="https://api.jael.ee"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-500 hover:text-orange-500 transition-colors underline underline-offset-2"
+              >
+                api.jael.ee
+              </a>{" "}
+              — LTA MRT Station Exit GeoJSON API
+            </span>
+            <span className="font-mono">
+              <a
+                href="https://modelcontextprotocol.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-500 hover:text-orange-500 transition-colors underline underline-offset-2"
+              >
+                MCP Specification
+              </a>
+            </span>
+          </div>
+          <div className="border-t border-gray-100 pt-5 text-[11px] text-gray-400 leading-relaxed">
+            <p>
+              Land Transport Authority. (2019). LTA MRT Station Exit (GEOJSON) (2026) [Dataset]. data.gov.sg. Retrieved April 14, 2026 from{" "}
+              <a
+                href="https://data.gov.sg/datasets/d_b39d3a0871985372d7e1637193335da5/view"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-500 hover:text-orange-500 transition-colors underline underline-offset-2 break-all"
+              >
+                https://data.gov.sg/datasets/d_b39d3a0871985372d7e1637193335da5/view
+              </a>
+            </p>
+            <p className="mt-1">
+              Dataset license: Free forever for personal or commercial use, under the{" "}
+              <a
+                href="https://data.gov.sg/open-data-licence"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-500 hover:text-orange-500 transition-colors underline underline-offset-2"
+              >
+                Open Data Licence
+              </a>
+              .
+            </p>
+          </div>
         </footer>
       </main>
     </div>

@@ -7,11 +7,17 @@ load_dotenv()
 API_USERNAME: str = os.environ.get("API_USERNAME", "")
 API_TOKEN: str = os.environ.get("API_TOKEN", "")
 
-# ── API endpoint (fully overridable via env vars) ────────────────────────────
-# Base URL default: https://api.jael.ee
-# Endpoint path default: /JLEE/sg_lta_mrt_station_exit_geojson_api
-# Full default URL: https://api.jael.ee/JLEE/sg_lta_mrt_station_exit_geojson_api
-API_BASE_URL: str = os.environ.get("API_BASE_URL", "https://api.jael.ee")
+# ── API endpoint ─────────────────────────────────────────────────────────────
+# API_BASE_URL is required — set it in Replit Secrets or a .env file.
+# No hardcoded default; the server will raise at startup if it is missing.
+_raw_base_url: str | None = os.environ.get("API_BASE_URL")
+if not _raw_base_url:
+    raise EnvironmentError(
+        "API_BASE_URL is not set. Add it to Replit Secrets (or your .env file) "
+        "before starting the server — e.g. API_BASE_URL=https://api.jael.ee"
+    )
+API_BASE_URL: str = _raw_base_url
+
 API_ENDPOINT_PATH: str = os.environ.get(
     "API_ENDPOINT_PATH", "/JLEE/sg_lta_mrt_station_exit_geojson_api"
 )

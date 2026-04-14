@@ -50,22 +50,14 @@ pip install -r requirements.txt
 Add the following to **Replit Secrets** (or copy `.env.example` to `.env` for local development):
 
 ```
+API_BASE_URL=https://api.jael.ee
 API_USERNAME=your_email@address.com
 API_TOKEN=t_your_token_here
 ```
 
-Get credentials at [https://sheetlabs.com](https://sheetlabs.com).
+All three are required. `API_BASE_URL` is the base URL of the LTA SheetLabs endpoint. `API_USERNAME` and `API_TOKEN` are your SheetLabs credentials (see [https://sheetlabs.com](https://sheetlabs.com)).
 
-#### Optional endpoint overrides
-
-The API base URL and endpoint path are configurable without touching the code:
-
-```
-API_BASE_URL=https://api.jael.ee
-API_ENDPOINT_PATH=/JLEE/sg_lta_mrt_station_exit_geojson_api
-```
-
-Default values above are used when these variables are absent.
+The endpoint path can also be overridden via `API_ENDPOINT_PATH` if needed (default: `/JLEE/sg_lta_mrt_station_exit_geojson_api`).
 
 ### 3. Run the server
 
@@ -88,6 +80,7 @@ Add to `claude_desktop_config.json`:
       "command": "python",
       "args": ["/absolute/path/to/sg-mrt-exits-mcp/main.py"],
       "env": {
+        "API_BASE_URL": "https://api.jael.ee",
         "API_USERNAME": "your_email@address.com",
         "API_TOKEN": "t_your_token_here"
       }
@@ -159,3 +152,11 @@ API_ENDPOINT_PATH=/JLEE/sg_lta_mrt_station_exit_geojson_api
 ```
 
 The full URL is assembled at runtime by `config.get_api_url()`.
+
+---
+
+## Data Source
+
+Land Transport Authority. (2019). LTA MRT Station Exit (GEOJSON) (2026) [Dataset]. data.gov.sg. Retrieved April 14, 2026 from https://data.gov.sg/datasets/d_b39d3a0871985372d7e1637193335da5/view
+
+Dataset license: Free forever for personal or commercial use, under the Open Data Licence (https://data.gov.sg/open-data-licence).
