@@ -49,7 +49,6 @@ A **Model Context Protocol (MCP) server** that wraps the Singapore LTA MRT Stati
 ### 1. Install dependencies
 
 ```bash
-cd sg-mrt-exits-mcp
 pip install -r requirements.txt
 ```
 
@@ -75,7 +74,7 @@ These environment variables have sensible defaults and do not need to be set unl
 |----------|---------|-------------|
 | `CACHE_TTL_SECONDS` | `300` | How long (in seconds) the full exit dataset is cached in memory before the next API fetch. Lower values keep data fresher; higher values reduce API calls. |
 | `API_MAX_CONCURRENCY` | `5` | Maximum simultaneous outbound HTTP requests to the LTA API. |
-| `MCP_TRANSPORT` | `stdio` | Transport protocol the server runs on. Options: `stdio` (local clients), `sse` (HTTP/SSE), `streamable-http` (HTTP/Streamable HTTP). |
+| `MCP_TRANSPORT` | `stdio` | Transport protocol. Options: `stdio` (local clients), `sse` (HTTP/SSE), `streamable-http` (HTTP/Streamable HTTP). Set to `streamable-http` for Replit deployment. **When deployed on Replit this is pre-configured automatically via `.replit` — no manual action required.** |
 
 ### 4. Run the server
 
@@ -92,6 +91,29 @@ MCP_TRANSPORT=streamable-http python main.py
 # SSE (Claude.ai, Cursor, Windsurf, older clients)
 MCP_TRANSPORT=sse python main.py
 ```
+
+---
+
+## Deploying on Replit
+
+The folder is self-contained and ships with a `.replit` file pre-configured for standalone deployment. `MCP_TRANSPORT=streamable-http` is set automatically in the production environment — you do not need to add it manually.
+
+### Steps
+
+1. Create a new **Python** Replit project.
+2. Upload all files from this folder into the project root (including `.replit` and `requirements.txt`).
+3. Add the following **Replit Secrets** in the new project:
+
+   | Secret | Value |
+   |--------|-------|
+   | `API_BASE_URL` | `https://api.jael.ee` |
+   | `API_USERNAME` | your api.jael.ee email |
+   | `API_TOKEN` | your api.jael.ee token |
+
+4. *(Optional)* To test HTTP mode in the Replit editor (not just after publishing), also add `MCP_TRANSPORT=streamable-http` as a Secret. The editor runs in stdio mode by default.
+5. **Publish the project.** Once deployed, the MCP server is live at:
+   - Streamable HTTP: `https://<your-project>.<your-username>.replit.app/mcp`
+   - SSE: `https://<your-project>.<your-username>.replit.app/sse`
 
 ---
 
@@ -230,6 +252,7 @@ The cold-cache cost is paid at most once per `CACHE_TTL_SECONDS` window (default
 
 ```
 sg-mrt-exits-mcp/
+├── .replit                  # Standalone Replit deployment config (HTTP mode pre-configured)
 ├── main.py                  # Entry point — run this to start the MCP server
 ├── server.py                # FastMCP instance and tool registration
 ├── config.py                # Centralised configuration (API URL, credentials, cache TTL)
