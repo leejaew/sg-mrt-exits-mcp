@@ -97,8 +97,12 @@ const TOOLS = [
 
 const TRANSPORT_CONFIGS: Record<Transport, string> = {
   http: `{
-  "type": "http",
-  "url": "https://your-deployed-mcp-server.com/mcp"
+  "mcpServers": {
+    "sg-mrt-exits": {
+      "type": "streamableHttp",
+      "url": "https://your-deployed-mcp-server.replit.app/mcp"
+    }
+  }
 }`,
   sse: `{
   "type": "sse",
@@ -155,7 +159,7 @@ const TRANSPORT_HINTS: Record<Transport, React.ReactNode> = {
 };
 
 const TRANSPORT_LABELS: Record<Transport, string> = {
-  http: "HTTP",
+  http: "Streamable HTTP",
   sse: "SSE",
   stdio: "STDIO",
 };
