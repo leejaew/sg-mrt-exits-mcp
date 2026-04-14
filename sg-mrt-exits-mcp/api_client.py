@@ -18,26 +18,51 @@ def _build_auth_header() -> dict[str, str]:
     }
 
 
-def _wildcard_to_regex(pattern: str) -> re.Pattern:
+def normalize_station_query(query: str) -> str:
     """
-    Convert a simple wildcard pattern (using * as glob) to a compiled regex.
-    Case-insensitive. Used for client-side fallback filtering.
+    Normalise a user-supplied station name query so searches are always
+    case-insensitive regardless of how the caller typed the input.
+
+    Rules:
+      - Strip leading/trailing whitespace
+      - Uppercase all alphabetic characters
+      - Preserve wildcard characters (*) exactly as supplied
 
     Examples:
-        '*hill'      → matches any station name ending with 'hill'
-        'bishan*'    → matches any station name starting with 'bishan'
-        '*central*'  → matches any station name containing 'central'
-        'orchard'    → matches any station name containing 'orchard'
+        'orchard'        → 'ORCHARD'
+        'Bright Hill'    → 'BRIGHT HILL'
+        '*hill'          → '*HILL'
+        'bishan*'        → 'BISHAN*'
+        '*central*'      → '*CENTRAL*'
+        '  Dhoby Ghaut ' → 'DHOBY GHAUT'
+    """
+    return query.strip().upper()
+
+
+def _wildcard_to_regex(pattern: str) -> re.Pattern:
+    """
+    Convert a normalised (uppercased) wildcard pattern to a compiled regex.
+
+    Always compiled with re.IGNORECASE as a safety net so that even if the
+    caller forgets to normalise, matching against the API's uppercase station
+    names will still succeed.
+
+    Wildcard semantics (* = zero or more characters):
+        '*HILL'      → matches any station name ending with 'HILL'
+        'BISHAN*'    → matches any station name starting with 'BISHAN'
+        '*CENTRAL*'  → matches any station name containing 'CENTRAL'
+        'ORCHARD'    → matches any station name containing 'ORCHARD'
+                       (no wildcard → treated as a substring / contains match)
     """
     if "*" not in pattern:
-        # Plain text: treat as contains match
+        # Plain text: treat as a substring / contains match
         escaped = re.escape(pattern)
         return re.compile(escaped, re.IGNORECASE)
 
-    # Convert glob wildcards to regex
+    # Convert glob wildcards to regex anchored at start/end
     parts = pattern.split("*")
-    regex = ".*".join(re.escape(p) for p in parts)
-    return re.compile(regex, re.IGNORECASE)
+    regex_body = ".*".join(re.escape(p) for p in parts)
+    return re.compile(regex_body, re.IGNORECASE)
 
 
 async def _fetch_raw(params: dict) -> list[dict] | str:
@@ -76,16 +101,25 @@ async def fetch_exits(station_name: str | None = None) -> list[dict] | str:
     """
     Fetch MRT exit records from the LTA SheetLabs API.
 
-    Args:
-        station_name: Optional station name filter. Supports:
-                      - Exact names:  "ORCHARD MRT STATION"
-                      - Prefix glob:  "bishan*"
-                      - Suffix glob:  "*hill"  (uses client-side fallback)
-                      - Infix glob:   "*central*"  (uses client-side fallback)
-                      - Plain text:   "orchard"  (client-side contains match)
-                      The query is automatically uppercased for API requests.
-                      When the API returns 0 results, a client-side fallback
-                      fetches all exits and filters locally using wildcard matching.
+    Search is always **case-insensitive**. The query is normalised (stripped and
+    uppercased) via normalize_station_query() before any processing, so callers
+    may pass any mix of cases — 'orchard', 'Orchard', 'ORCHARD' all behave the
+    same way.
+
+    Supported query formats:
+        - Plain text:  'orchard'        → substring match across all stations
+        - Full name:   'ORCHARD MRT STATION' → exact API match
+        - Prefix glob: 'bishan*'        → API-native prefix search
+        - Suffix glob: '*hill'          → client-side fallback (regex)
+        - Infix glob:  '*central*'      → client-side fallback (regex)
+
+    Two-step search strategy:
+        Step 1 — send the normalised (uppercased) query directly to the API.
+                 This handles exact names and prefix globs efficiently.
+        Step 2 — if the API returns 0 results, fetch all exits and apply the
+                 wildcard pattern locally (re.IGNORECASE). This handles leading
+                 wildcards, infix globs, and plain-text partial searches that
+                 the API does not support natively.
 
     Returns:
         A list of parsed exit dicts, or a plain-text error string on failure.
@@ -104,22 +138,25 @@ async def fetch_exits(station_name: str | None = None) -> list[dict] | str:
             return raw
         return _parse_records(raw)
 
-    # ── Step 1: Try the API filter directly (uppercased) ─────────────────────
-    raw = await _fetch_raw({"properties[STATION_NA]": station_name.upper()})
+    # ── Normalise: strip whitespace + uppercase (case-insensitive entry point) ─
+    normalised = normalize_station_query(station_name)
+
+    # ── Step 1: Try the API with the normalised (uppercased) query ────────────
+    raw = await _fetch_raw({"properties[STATION_NA]": normalised})
     if isinstance(raw, str):
         return raw
 
     if raw:
         return _parse_records(raw)
 
-    # ── Step 2: Client-side fallback ─────────────────────────────────────────
-    # The API does not reliably support leading wildcards. Fetch everything and
-    # filter locally using the wildcard pattern.
+    # ── Step 2: Client-side fallback (leading wildcards / partial text) ────────
+    # Build a regex from the normalised pattern. re.IGNORECASE is applied as an
+    # additional safety net, though the pattern is already uppercased.
     all_raw = await _fetch_raw({})
     if isinstance(all_raw, str):
         return all_raw
 
-    pattern = _wildcard_to_regex(station_name)
+    pattern = _wildcard_to_regex(normalised)
     matching = [
         r for r in all_raw
         if pattern.search(r.get("properties", {}).get("STATION_NA", ""))
