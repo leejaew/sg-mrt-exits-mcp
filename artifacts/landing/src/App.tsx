@@ -117,12 +117,7 @@ const TRANSPORT_CONFIGS: Record<Transport, string> = {
     "sg-mrt-exits": {
       "transportType": "stdio",
       "command": "python3",
-      "args": ["/path/to/sg-mrt-exits-mcp/main.py"],
-      "env": {
-        "API_BASE_URL": "https://api.jael.ee",
-        "API_USERNAME": "your-username",
-        "API_TOKEN": "your-api-token"
-      }
+      "args": ["/path/to/sg-mrt-exits-mcp/main.py"]
     }
   }
 }`,
@@ -150,19 +145,23 @@ const TRANSPORT_HINTS: Record<Transport, React.ReactNode> = {
   ),
   stdio: (
     <>
-      Paste this into Manus AI's custom MCP settings or use with any stdio-compatible client. Replace{" "}
+      Replace{" "}
       <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
         /path/to/
       </span>{" "}
-      with the actual path and fill in your{" "}
+      with the actual path to the server. Credentials (
+      <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
+        API_BASE_URL
+      </span>
+      ,{" "}
       <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
         API_USERNAME
-      </span>{" "}
-      and{" "}
+      </span>
+      ,{" "}
       <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
         API_TOKEN
-      </span>{" "}
-      for the api.jael.ee endpoint.
+      </span>
+      ) are read from your host environment automatically — set them in your shell profile or system env and they will be inherited by the subprocess without being written into this config.
     </>
   ),
 };
