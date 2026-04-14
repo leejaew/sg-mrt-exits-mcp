@@ -67,7 +67,16 @@ All three are required. `API_BASE_URL` is the base URL of the api.jael.ee endpoi
 
 The endpoint path can also be overridden via `API_ENDPOINT_PATH` if needed (default: `/JLEE/sg_lta_mrt_station_exit_geojson_api`).
 
-### 3. Run the server
+### 3. Optional configuration
+
+These environment variables have sensible defaults and do not need to be set unless you want to tune behaviour:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CACHE_TTL_SECONDS` | `300` | How long (in seconds) the full exit dataset is cached in memory before the next API fetch. Lower values keep data fresher; higher values reduce API calls. |
+| `API_MAX_CONCURRENCY` | `5` | Maximum simultaneous outbound HTTP requests to the LTA API. |
+
+### 4. Run the server
 
 ```bash
 python main.py
@@ -130,6 +139,26 @@ Credentials (`API_BASE_URL`, `API_USERNAME`, `API_TOKEN`) are inherited from the
 | Endpoint | `https://api.jael.ee/JLEE/sg_lta_mrt_station_exit_geojson_api` |
 | Auth | HTTP Basic Auth (`API_USERNAME:API_TOKEN`, Base64-encoded) |
 | Filter | `?properties[STATION_NA]=<name>` (optional; supports wildcards) |
+| Dataset | 597 exits across 186 stations (full active MRT/LRT network) |
+
+---
+
+## Performance
+
+The server caches the full 597-exit dataset in memory after the first fetch. All subsequent calls to spatial, density, and line tools read from that in-memory cache at effectively zero cost. Station-name search tools use a three-tier strategy: in-memory filter first (when cache is warm), falling back to a filtered API query, then a full-dataset fallback.
+
+Landmark geocoding results (Nominatim lookups) are also cached in memory for the process lifetime — repeated lookups of the same place skip the Nominatim round-trip entirely.
+
+| Scenario | Typical latency |
+|----------|----------------|
+| Cold cache (first call, API fetch required) | ~250–950 ms |
+| Warm cache — spatial / density / line tools | < 1 ms |
+| Warm cache — station-name search tools | < 1 ms |
+| Geocoding — first lookup (Nominatim, live) | ~90–1000 ms |
+| Geocoding — repeated lookup (cached) | < 0.1 ms |
+| 8 concurrent calls (warm cache) | ~3 ms wall time |
+
+The cold-cache cost is paid at most once per `CACHE_TTL_SECONDS` window (default: 5 minutes).
 
 ---
 
@@ -153,21 +182,28 @@ Credentials (`API_BASE_URL`, `API_USERNAME`, `API_TOKEN`) are inherited from the
 
 ```
 sg-mrt-exits-mcp/
-├── main.py              # Entry point — run this to start the MCP server
-├── server.py            # FastMCP instance and tool registration
-├── config.py            # Centralised configuration (API URL, credentials)
-├── api_client.py        # HTTP client with Basic Auth, response parsing
-├── geo_utils.py         # Haversine distance, coordinate parsing, formatting
-├── geocoding.py         # Nominatim landmark-to-coordinates resolver
-├── maps_links.py        # Google Maps URL builders
-├── line_lookup.py       # Static MRT line → station mapping dictionary
+├── main.py                  # Entry point — run this to start the MCP server
+├── server.py                # FastMCP instance and tool registration
+├── config.py                # Centralised configuration (API URL, credentials, cache TTL)
+├── api_client.py            # HTTP client with Basic Auth, three-tier fetch strategy, in-memory cache
+├── geo_utils.py             # Haversine distance, coordinate parsing, nearby_exits() helper
+├── geocoding.py             # Nominatim landmark resolver with in-memory coordinate cache
+├── maps_links.py            # Google Maps URL builders
+├── line_lookup.py           # Static MRT line → station mapping dictionary
+├── validators.py            # Input validation (coordinates, radius, top_n, strings)
 ├── tools/
-│   ├── search_tools.py  # search_exits_by_station, get_exit_detail
-│   ├── spatial_tools.py # nearest exit, radius search, urban density
-│   ├── map_tools.py     # get_exit_map_view
-│   ├── use_case_tools.py# retail, accessibility, emergency, logistics, tourist, commuter
-│   └── line_tools.py    # list_exits_by_line, get_station_footprint
-├── .env.example         # Example secrets file — never commit real credentials
+│   ├── search_tools.py      # search_exits_by_station, get_exit_detail
+│   ├── spatial_tools.py     # find_nearest_exit_by_coordinates, find_nearest_exit_by_landmark,
+│   │                        #   find_exits_within_radius, urban_planning_exit_density
+│   ├── map_tools.py         # get_exit_map_view
+│   ├── line_tools.py        # list_exits_by_line, get_station_footprint
+│   ├── location_tools.py    # retail_proximity_analysis, accessibility_check,
+│   │                        #   logistics_delivery_planning
+│   └── navigation_tools.py  # emergency_response_exits, tourist_guide_exits,
+│                            #   commuter_exit_comparison
+├── benchmark.py             # Live performance benchmark (37 test cases, phases 1–5)
+├── validate.py              # MCP tool schema validation script
+├── .env.example             # Example secrets file — never commit real credentials
 └── requirements.txt
 ```
 
