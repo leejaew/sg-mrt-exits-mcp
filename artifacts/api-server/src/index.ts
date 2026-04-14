@@ -2,6 +2,7 @@ import { spawn } from "child_process";
 import path from "path";
 import app from "./app";
 import { logger } from "./lib/logger";
+import { waitForMcpPort } from "./mcp-readiness";
 
 const rawPort = process.env["PORT"];
 
@@ -17,7 +18,7 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-// ── Spawn Python MCP server (production only) ──────────────────────────────────
+// ── Spawn Python MCP server (production only) ──────────────────────────────
 // In development the "MRT Exits MCP Server" workflow handles this separately.
 // In production that workflow does not run, so we start it here as a subprocess
 // so the proxy routes in app.ts have a target to forward to.
@@ -28,10 +29,15 @@ if (process.env["NODE_ENV"] === "production") {
     env: {
       ...process.env,
       MCP_TRANSPORT: "streamable-http",
+      // Bind Python on a fixed internal port; api-server proxy targets this.
+      // Unset PORT so main.py reads FASTMCP_PORT instead (avoids confusion
+      // with the Node PORT=8080 that gets spread from process.env).
       PORT: "8000",
+      FASTMCP_PORT: "8000",
+      FASTMCP_HOST: "127.0.0.1",
     },
     stdio: "inherit",
-    cwd: process.cwd(),
+    cwd: path.join(process.cwd(), "sg-mrt-exits-mcp"),
   });
 
   mcpProcess.on("error", (err) => {
@@ -57,8 +63,12 @@ if (process.env["NODE_ENV"] === "production") {
 
   logger.info({ script: mcpScript }, "MCP server subprocess started");
 }
-// ── End MCP subprocess ─────────────────────────────────────────────────────────
 
+// Poll port 8000 in the background (works in both dev and production).
+// Sets the mcpReady flag so the proxy starts forwarding once Python is up.
+waitForMcpPort(8000, "127.0.0.1", 1000, 180_000);
+
+// ── Start HTTP server ──────────────────────────────────────────────────────
 app.listen(port, (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
