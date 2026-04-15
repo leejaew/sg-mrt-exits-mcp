@@ -43,17 +43,22 @@ Exposes **15 tools** for AI assistants to answer real-world questions about Sing
 - **Geocoding**: Nominatim / OpenStreetMap (free, no key needed)
 - **Package manager**: uv (via Replit)
 
-### Secrets Required
-- `API_BASE_URL` — base URL of the api.jael.ee endpoint (required)
-- `API_USERNAME` — api.jael.ee API username
-- `API_TOKEN` — api.jael.ee API token
+### Secrets / Environment Variables
 
-### API Endpoint Configuration
-Fully configurable via env vars (no code changes needed):
-- `API_BASE_URL` — base URL (required, stored in Replit Secrets)
-- `API_ENDPOINT_PATH` — default: `/JLEE/sg_lta_mrt_station_exit_geojson_api`
+All configuration is managed through Replit Secrets — no values are hardcoded in the codebase.
 
-Full URL assembled at runtime by `config.get_api_url()`.
+| Key | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `API_BASE_URL` | Yes | — | Base URL of the data source (e.g. `https://api.jael.ee`) |
+| `API_ENDPOINT_PATH` | Yes | — | API endpoint path (e.g. `/JLEE/sg_lta_mrt_station_exit_geojson_api`) |
+| `API_USERNAME` | Yes | — | api.jael.ee username (HTTP Basic Auth) |
+| `API_TOKEN` | Yes | — | api.jael.ee token (HTTP Basic Auth) |
+| `MCP_TRANSPORT` | No | `streamable-http` | Transport: `stdio`, `sse`, or `streamable-http` |
+| `CACHE_TTL_SECONDS` | No | `300` | Full dataset cache TTL in seconds |
+| `API_MAX_CONCURRENCY` | No | `5` | Max simultaneous outbound HTTP requests |
+
+`config.py` raises an explicit `EnvironmentError` at startup if any required key is missing.
+Full API URL assembled at runtime by `config.get_api_url()`.
 
 ### Key Commands
 - `cd sg-mrt-exits-mcp && python3 validate.py` — validate setup and test API
@@ -80,11 +85,17 @@ Full URL assembled at runtime by `config.get_api_url()`.
 NSL, EWL, NEL, CCL, DTL, TEL, BPL (Bukit Panjang LRT), SLRT (Sengkang LRT), PLRT (Punggol LRT)
 
 ### Architecture Notes
-- `config.py` — centralised configuration (API URL, credentials, env var overrides)
+- `config.py` — centralised configuration; reads all values from env/Secrets, raises `EnvironmentError` if required keys are missing — no hardcoded fallbacks
 - `api_client.py` — async HTTP client with Basic Auth; includes client-side wildcard fallback for leading-wildcard searches (`*hill`) that the API does not support natively
-- `geo_utils.py` — Haversine distance, coordinate parsing (`"lng, lat"` string → `(lat, lng)` tuple), formatting helpers
+- `geo_utils.py` — Haversine distance, coordinate parsing (`"lng, lat"` string → `(lat, lng)` tuple), formatting helpers, `normalize_exit_code()` for flexible matching
 - `geocoding.py` — Nominatim landmark resolver (always appends `, Singapore`)
 - `line_lookup.py` — static `STATION_LINE_MAP` dict + `LINE_NAME_TO_CODE` for full line name resolution
+
+### Tool Behaviour Notes
+- **Exit code matching**: `get_exit_detail` and `get_exit_map_view` accept `"B"`, `"b"`, `"Exit B"`, or `"exit b"` interchangeably — `normalize_exit_code()` strips the prefix before comparison
+- **`tourist_guide_exits`**: accepts optional `top_n` parameter (default 5)
+- **`commuter_exit_comparison`**: when a station name matches multiple stations, each exit line is prefixed with its station name to avoid ambiguity
+- **`find_exits_within_radius`**: shows resolved geocoded coordinates when a landmark name is used
 
 ### Claude Desktop Config
 ```json
@@ -92,12 +103,9 @@ NSL, EWL, NEL, CCL, DTL, TEL, BPL (Bukit Panjang LRT), SLRT (Sengkang LRT), PLRT
   "mcpServers": {
     "sg-mrt-exits-mcp": {
       "command": "python3",
-      "args": ["/absolute/path/to/sg-mrt-exits-mcp/main.py"],
-      "env": {
-        "API_USERNAME": "your_email",
-        "API_TOKEN": "t_your_token"
-      }
+      "args": ["/absolute/path/to/sg-mrt-exits-mcp/main.py"]
     }
   }
 }
 ```
+Credentials are inherited from the host environment — set `API_BASE_URL`, `API_ENDPOINT_PATH`, `API_USERNAME`, and `API_TOKEN` in your shell profile rather than hardcoding them in this config.

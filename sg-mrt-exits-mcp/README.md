@@ -54,17 +54,17 @@ pip install -r requirements.txt
 
 ### 2. Configure secrets
 
-Add the following to **Replit Secrets** (or copy `.env.example` to `.env` for local development):
+Add the following to **Replit Secrets** (or copy `.env.example` to `.env` for local development).
+All four are **required** — the server will not start if any are missing.
 
-```
-API_BASE_URL=https://api.jael.ee
-API_USERNAME=your_email@address.com
-API_TOKEN=t_your_token_here
-```
+| Secret | Example value | Description |
+|--------|--------------|-------------|
+| `API_BASE_URL` | `https://api.jael.ee` | Base URL of the data source |
+| `API_ENDPOINT_PATH` | `/JLEE/sg_lta_mrt_station_exit_geojson_api` | API endpoint path |
+| `API_USERNAME` | `your_email@address.com` | api.jael.ee username |
+| `API_TOKEN` | `t_your_token_here` | api.jael.ee token |
 
-All three are required. `API_BASE_URL` is the base URL of the api.jael.ee endpoint. `API_USERNAME` and `API_TOKEN` are your api.jael.ee credentials.
-
-The endpoint path can also be overridden via `API_ENDPOINT_PATH` if needed (default: `/JLEE/sg_lta_mrt_station_exit_geojson_api`).
+Separating `API_BASE_URL` and `API_ENDPOINT_PATH` makes it straightforward to switch to a different API source — update both Secrets and redeploy, no code changes needed.
 
 ### 3. Optional configuration
 
@@ -72,9 +72,9 @@ These environment variables have sensible defaults and do not need to be set unl
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `MCP_TRANSPORT` | `streamable-http` | Transport protocol. Options: `stdio` (local clients), `sse` (HTTP/SSE), `streamable-http` (HTTP/Streamable HTTP). Defaults to `streamable-http` for Replit deployment; override via Replit Secret to change without touching code. |
 | `CACHE_TTL_SECONDS` | `300` | How long (in seconds) the full exit dataset is cached in memory before the next API fetch. Lower values keep data fresher; higher values reduce API calls. |
 | `API_MAX_CONCURRENCY` | `5` | Maximum simultaneous outbound HTTP requests to the LTA API. |
-| `MCP_TRANSPORT` | `stdio` | Transport protocol. Options: `stdio` (local clients), `sse` (HTTP/SSE), `streamable-http` (HTTP/Streamable HTTP). Set to `streamable-http` for Replit deployment. **When deployed on Replit this is pre-configured automatically via `.replit` — no manual action required.** |
 
 ### 4. Run the server
 
@@ -96,7 +96,7 @@ MCP_TRANSPORT=sse python main.py
 
 ## Deploying on Replit
 
-The folder is self-contained and ships with a `.replit` file pre-configured for standalone deployment. `MCP_TRANSPORT=streamable-http` is set automatically in the production environment — you do not need to add it manually.
+The folder is self-contained and ships with a `.replit` file pre-configured for standalone deployment.
 
 ### Steps
 
@@ -107,21 +107,24 @@ The folder is self-contained and ships with a `.replit` file pre-configured for 
    | Secret | Value |
    |--------|-------|
    | `API_BASE_URL` | `https://api.jael.ee` |
+   | `API_ENDPOINT_PATH` | `/JLEE/sg_lta_mrt_station_exit_geojson_api` |
    | `API_USERNAME` | your api.jael.ee email |
    | `API_TOKEN` | your api.jael.ee token |
+   | `MCP_TRANSPORT` | `streamable-http` |
 
-4. *(Optional)* To test HTTP mode in the Replit editor (not just after publishing), also add `MCP_TRANSPORT=streamable-http` as a Secret. The editor runs in stdio mode by default.
-5. **Publish the project.** Once deployed, the MCP server is live at:
+4. **Publish the project.** Once deployed, the MCP server is live at:
    - Streamable HTTP: `https://<your-project>.<your-username>.replit.app/mcp`
    - SSE: `https://<your-project>.<your-username>.replit.app/sse`
+
+> **All configuration is managed through Replit Secrets.** To change the API source or transport mode, update the relevant Secret and redeploy — no code changes required.
 
 ---
 
 ## Connection Config
 
-### Manus AI — Streamable HTTP (recommended, tested)
+### Manus AI — Streamable HTTP (recommended, tested ✓)
 
-Requires the server to be deployed and started with `MCP_TRANSPORT=streamable-http`. The `/mcp` endpoint is then available at your deployment URL.
+Requires `MCP_TRANSPORT=streamable-http` (the default for deployed Replit instances).
 
 ```json
 {
@@ -138,7 +141,7 @@ Requires the server to be deployed and started with `MCP_TRANSPORT=streamable-ht
 
 > **Note:** This configuration has not been tested. SSE (Server-Sent Events) is the older HTTP transport, superseded by Streamable HTTP but still widely supported.
 
-Requires the server to be deployed and started with `MCP_TRANSPORT=sse`. The `/sse` endpoint is then available at your deployment URL.
+Requires `MCP_TRANSPORT=sse`.
 
 ```json
 {
@@ -163,11 +166,11 @@ Some clients (e.g. Cursor) omit the `type` key and infer SSE from the URL:
 }
 ```
 
-### Manus AI — STDIO *(not tested)*
+### STDIO — local clients *(not tested)*
 
-> **Note:** This configuration has not been tested. It should work with any MCP client that supports stdio transport, but your mileage may vary.
+> **Note:** This configuration has not been tested. It should work with any MCP client that supports stdio transport.
 
-No `MCP_TRANSPORT` change needed — stdio is the default.
+No `MCP_TRANSPORT` change needed — stdio is the default when the Secret is not set.
 
 ```json
 {
@@ -181,13 +184,11 @@ No `MCP_TRANSPORT` change needed — stdio is the default.
 }
 ```
 
-Credentials (`API_BASE_URL`, `API_USERNAME`, `API_TOKEN`) are inherited from the host environment — set them in your shell profile or system env rather than hardcoding them in the config.
+Credentials (`API_BASE_URL`, `API_ENDPOINT_PATH`, `API_USERNAME`, `API_TOKEN`) are inherited from the host environment — set them in your shell profile or system env rather than hardcoding them in the config.
 
 ### Claude Desktop *(not tested)*
 
 > **Note:** This configuration has not been tested. The format follows the Claude Desktop MCP documentation but has not been verified end-to-end.
-
-No `MCP_TRANSPORT` change needed — stdio is the default.
 
 ```json
 {
@@ -206,10 +207,32 @@ No `MCP_TRANSPORT` change needed — stdio is the default.
 
 | Property | Value |
 |----------|-------|
-| Endpoint | `https://api.jael.ee/JLEE/sg_lta_mrt_station_exit_geojson_api` |
+| Base URL | Configured via `API_BASE_URL` Secret |
+| Endpoint path | Configured via `API_ENDPOINT_PATH` Secret |
+| Full default URL | `https://api.jael.ee/JLEE/sg_lta_mrt_station_exit_geojson_api` |
 | Auth | HTTP Basic Auth (`API_USERNAME:API_TOKEN`, Base64-encoded) |
 | Filter | `?properties[STATION_NA]=<name>` (optional; supports wildcards) |
 | Dataset | 597 exits across 186 stations (full active MRT/LRT network) |
+
+---
+
+## Tool Behaviour Notes
+
+### Flexible exit code matching
+
+`get_exit_detail` and `get_exit_map_view` accept exit codes in any format — `"B"`, `"b"`, `"Exit B"`, or `"exit b"` all resolve to the same exit. The server normalises both the input and the stored value before comparing, so AI agents do not need to know the exact casing or prefix the API uses internally.
+
+### Tourist guide — configurable result count
+
+`tourist_guide_exits` accepts an optional `top_n` parameter (default `5`) to control how many nearby exits are returned.
+
+### Commuter comparison — multi-station awareness
+
+`commuter_exit_comparison` handles station name queries that match more than one station. When multiple stations are returned, each exit line is prefixed with its station name so the output is unambiguous.
+
+### Radius search — resolved coordinates
+
+`find_exits_within_radius` now shows the geocoded coordinates for landmark-name queries (consistent with `find_nearest_exit_by_landmark`), making it easy to verify the geocoding resolved to the correct location.
 
 ---
 
@@ -252,12 +275,12 @@ The cold-cache cost is paid at most once per `CACHE_TTL_SECONDS` window (default
 
 ```
 sg-mrt-exits-mcp/
-├── .replit                  # Standalone Replit deployment config (HTTP mode pre-configured)
+├── .replit                  # Standalone Replit deployment config
 ├── main.py                  # Entry point — run this to start the MCP server
 ├── server.py                # FastMCP instance and tool registration
-├── config.py                # Centralised configuration (API URL, credentials, cache TTL)
+├── config.py                # Centralised configuration (reads all values from env/Secrets)
 ├── api_client.py            # HTTP client with Basic Auth, three-tier fetch strategy, in-memory cache
-├── geo_utils.py             # Haversine distance, coordinate parsing, nearby_exits() helper
+├── geo_utils.py             # Haversine distance, coordinate parsing, exit code normalisation
 ├── geocoding.py             # Nominatim landmark resolver with in-memory coordinate cache
 ├── maps_links.py            # Google Maps URL builders
 ├── line_lookup.py           # Static MRT line → station mapping dictionary
@@ -274,23 +297,28 @@ sg-mrt-exits-mcp/
 │   └── navigation_tools.py  # emergency_response_exits, tourist_guide_exits,
 │                            #   commuter_exit_comparison
 ├── benchmark.py             # Live performance benchmark (37 test cases, phases 1–5)
-├── validate.py              # MCP tool schema validation script
+├── validate.py              # Startup validation — checks all required Secrets and API connectivity
 ├── .env.example             # Example secrets file — never commit real credentials
 └── requirements.txt
 ```
 
 ---
 
-## Updating the API Endpoint
+## Secrets Reference
 
-To switch to a different base URL or path without modifying code, set environment variables:
+A complete list of every environment variable / Secret the server reads:
 
-```bash
-API_BASE_URL=https://api.jael.ee
-API_ENDPOINT_PATH=/JLEE/sg_lta_mrt_station_exit_geojson_api
-```
+| Key | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `API_BASE_URL` | Yes | — | Base URL of the data source (e.g. `https://api.jael.ee`) |
+| `API_ENDPOINT_PATH` | Yes | — | API endpoint path (e.g. `/JLEE/sg_lta_mrt_station_exit_geojson_api`) |
+| `API_USERNAME` | Yes | — | api.jael.ee username (HTTP Basic Auth) |
+| `API_TOKEN` | Yes | — | api.jael.ee token (HTTP Basic Auth) |
+| `MCP_TRANSPORT` | No | `streamable-http` | Transport protocol: `stdio`, `sse`, or `streamable-http` |
+| `CACHE_TTL_SECONDS` | No | `300` | In-memory cache TTL for the full exits dataset (seconds) |
+| `API_MAX_CONCURRENCY` | No | `5` | Max simultaneous outbound HTTP requests |
 
-The full URL is assembled at runtime by `config.get_api_url()`.
+No secret values are hardcoded anywhere in the codebase. `config.py` reads every value from the environment and raises an explicit `EnvironmentError` at startup if a required key is missing.
 
 ---
 
