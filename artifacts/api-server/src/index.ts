@@ -30,10 +30,15 @@ if (process.env["NODE_ENV"] === "production") {
   // Python can import them from the local filesystem without Nix hydration.
   const sitePackages = path.join(mcpDir, "site-packages");
 
+  // Transport is read from the MCP_TRANSPORT Secret so it can be changed from
+  // a single place without touching code. Falls back to "streamable-http" if
+  // the Secret is not set, which is the correct value for deployed production.
+  const mcpTransport = process.env["MCP_TRANSPORT"] ?? "streamable-http";
+
   const mcpProcess = spawn("python3", [mcpScript], {
     env: {
       ...process.env,
-      MCP_TRANSPORT: "streamable-http",
+      MCP_TRANSPORT: mcpTransport,
       // Bind Python on a fixed internal port; proxy targets this.
       PORT: "8000",
       FASTMCP_PORT: "8000",
@@ -66,7 +71,7 @@ if (process.env["NODE_ENV"] === "production") {
     process.exit(0);
   });
 
-  logger.info({ script: mcpScript, sitePackages }, "MCP server subprocess started");
+  logger.info({ script: mcpScript, sitePackages, mcpTransport }, "MCP server subprocess started");
 }
 
 // Watch port 8000 forever (dev + production).
