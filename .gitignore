@@ -48,3 +48,17 @@ Thumbs.db
 .cache/
 .local/
 sg-mrt-exits-mcp/site-packages/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.eggs/
+
+# Environment / secrets — never commit real credentials
+.env
+.env.local
+.env.*.local
