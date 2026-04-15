@@ -216,6 +216,48 @@ Credentials (`API_BASE_URL`, `API_ENDPOINT_PATH`, `API_USERNAME`, `API_TOKEN`) a
 
 ---
 
+## Using a Custom API Source
+
+This MCP server is not tied to `api.jael.ee`. You can point it at any API that serves the same dataset structure — including a self-hosted instance, a mirror, or an alternative provider of the same LTA data.
+
+The original dataset is publicly available at no cost:
+
+> **LTA MRT Station Exit (GeoJSON)**
+> https://data.gov.sg/datasets/d_b39d3a0871985372d7e1637193335da5/view
+> Licensed under the [Singapore Open Data Licence](https://data.gov.sg/open-data-licence) — free for personal and commercial use.
+
+To switch the server to a different API source, update these four Secrets and redeploy — no code changes required:
+
+| Secret | What to set |
+|--------|-------------|
+| `API_BASE_URL` | Base URL of your API host (e.g. `https://your-api-host.com`) |
+| `API_ENDPOINT_PATH` | Path to the GeoJSON endpoint (e.g. `/your/endpoint/path`) |
+| `API_USERNAME` | Username for HTTP Basic Auth (leave blank if your API is unauthenticated) |
+| `API_TOKEN` | Token/password for HTTP Basic Auth (leave blank if unauthenticated) |
+
+### Compatibility requirement
+
+Your API must return GeoJSON records with the following structure for all 15 tools to work correctly:
+
+```json
+{
+  "properties": {
+    "STATION_NA": "ORCHARD MRT STATION",
+    "EXIT_CODE":  "Exit A",
+    "OBJECT_ID":  12345,
+    "INC_CRC":    "ABC123",
+    "FMEL_UPD_D": 20251201000000.0
+  },
+  "geometry": {
+    "coordinates": "103.83260, 1.30420"
+  }
+}
+```
+
+The key fields are `STATION_NA` (station name in uppercase), `EXIT_CODE` (exit label), and `geometry.coordinates` (a `"longitude, latitude"` string). Optional filtering via `?properties[STATION_NA]=<name>` is also supported for station-name search performance, but the server will fall back to full-dataset filtering in memory if the parameter is not supported.
+
+---
+
 ## Tool Behaviour Notes
 
 ### Flexible exit code matching
