@@ -64,14 +64,16 @@ async def emergency_response_exits(
 async def tourist_guide_exits(
     destination: str,
     include_map_links: bool = False,
+    top_n: int = 5,
 ) -> str:
     """
     Help tourists find the best MRT exit for a Singapore attraction or landmark.
 
     Returns the closest exits with distances and a friendly plain-text description
     of which exit to use. Set include_map_links to true to add Google Maps links.
+    Set top_n to control how many exits are returned (default 5).
     """
-    err = validate_string(destination, "destination")
+    err = validate_string(destination, "destination") or validate_top_n(top_n)
     if err:
         return err
 
@@ -87,7 +89,7 @@ async def tourist_guide_exits(
     ranked = sorted(
         exits,
         key=lambda e: haversine_meters(lat, lng, e["lat"], e["lng"]),
-    )[:5]
+    )[:top_n]
 
     lines = [f"Tourist guide — MRT exits near '{destination}':\n"]
     for i, e in enumerate(ranked, 1):
@@ -150,7 +152,13 @@ async def commuter_exit_comparison(
             "Try a broader search term or check the station name."
         )
 
-    display = display_station_name(exits[0]["station_na"])
+    unique_stations = sorted({e["station_na"] for e in exits})
+    multi_station = len(unique_stations) > 1
+    if multi_station:
+        station_displays = [display_station_name(s) for s in unique_stations]
+        display = " / ".join(station_displays)
+    else:
+        display = display_station_name(exits[0]["station_na"])
 
     dest_lat: float | None = None
     dest_lng: float | None = None
@@ -171,20 +179,33 @@ async def commuter_exit_comparison(
         dest_desc = destination_landmark if destination_landmark else format_coords_plain(
             dest_lat, dest_lng
         )
-        lines = [f"{display} exits ranked by distance to '{dest_desc}':\n"]
+        header = (
+            f"Exits matching '{station_name}' ranked by distance to '{dest_desc}':\n"
+            if multi_station
+            else f"{display} exits ranked by distance to '{dest_desc}':\n"
+        )
+        lines = [header]
         for i, e in enumerate(ranked, 1):
             dist = haversine_meters(dest_lat, dest_lng, e["lat"], e["lng"])
             exit_coords = format_coords_plain(e["lat"], e["lng"])
+            station_prefix = f"{display_station_name(e['station_na'])} — " if multi_station else ""
             lines.append(
-                f"{i}. {e['exit_code']} — {format_distance(dist)} from destination "
+                f"{i}. {station_prefix}{e['exit_code']} — {format_distance(dist)} from destination "
                 f"(exit at {exit_coords})"
             )
-        lines.append(f"\nBest exit: {ranked[0]['exit_code']}")
+        best = ranked[0]
+        best_label = (
+            f"{display_station_name(best['station_na'])} {best['exit_code']}"
+            if multi_station
+            else best["exit_code"]
+        )
+        lines.append(f"\nBest exit: {best_label}")
     else:
         lines = [f"All exits at {display}:\n"]
         for e in sorted(exits, key=lambda x: x["exit_code"]):
             coords = format_coords_plain(e["lat"], e["lng"])
-            lines.append(f"  • {e['exit_code']} — {coords}")
+            station_prefix = f"{display_station_name(e['station_na'])} — " if multi_station else ""
+            lines.append(f"  • {station_prefix}{e['exit_code']} — {coords}")
 
     return "\n".join(lines)
 

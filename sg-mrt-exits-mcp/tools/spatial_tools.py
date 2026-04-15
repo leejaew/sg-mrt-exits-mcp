@@ -122,10 +122,17 @@ async def find_exits_within_radius(
             f"'{location_desc}'."
         )
 
-    lines = [
+    header_lines = []
+    if landmark_name:
+        header_lines.append(
+            f"Location resolved: '{landmark_name}' → {format_coords_plain(lat, lng)}"
+        )
+    header_lines.append(
         f"Found {len(close)} exit(s) within {format_distance(radius_metres)} "
         f"of '{location_desc}':\n"
-    ]
+    )
+
+    lines = header_lines
     for e, dist in close:
         display = display_station_name(e["station_na"])
         lines.append(f"  • {display} — {e['exit_code']} ({format_distance(dist)})")

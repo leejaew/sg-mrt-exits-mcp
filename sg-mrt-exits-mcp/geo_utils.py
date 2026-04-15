@@ -95,6 +95,26 @@ def format_timestamp(fmel_upd_d: float) -> str:
         return str(fmel_upd_d)
 
 
+def normalize_exit_code(code: str) -> str:
+    """
+    Normalise an exit code for flexible matching.
+
+    Strips whitespace, lowercases, and removes the 'Exit ' prefix so that
+    both 'B' and 'Exit B' resolve to the same canonical form 'b'.
+
+    Examples:
+        'B'      → 'b'
+        'Exit B' → 'b'
+        'exit b' → 'b'
+        '1'      → '1'
+        'Exit 1' → '1'
+    """
+    c = code.strip().lower()
+    if c.startswith("exit "):
+        c = c[5:].strip()
+    return c
+
+
 def bounding_box_description(exits: list[dict]) -> str:
     """
     Given a list of parsed exit dicts (each with 'lat' and 'lng'),

@@ -1,5 +1,5 @@
 from api_client import fetch_exits
-from geo_utils import format_coords_plain, display_station_name, format_timestamp
+from geo_utils import format_coords_plain, display_station_name, format_timestamp, normalize_exit_code
 from validators import validate_string
 
 
@@ -59,9 +59,9 @@ async def get_exit_detail(station_name: str, exit_code: str) -> str:
             "Try a broader search term or check the station name."
         )
 
-    normalised_code = exit_code.strip().lower()
+    normalised_code = normalize_exit_code(exit_code)
     match = next(
-        (e for e in result if e["exit_code"].strip().lower() == normalised_code),
+        (e for e in result if normalize_exit_code(e["exit_code"]) == normalised_code),
         None,
     )
 
@@ -69,7 +69,8 @@ async def get_exit_detail(station_name: str, exit_code: str) -> str:
         available = ", ".join(sorted({e["exit_code"] for e in result}))
         return (
             f"Exit '{exit_code}' not found at station matching '{station_name}'. "
-            f"Available exits: {available}"
+            f"Available exits: {available}. "
+            f"Tip: you can pass just the letter or number (e.g. 'B') or the full label (e.g. 'Exit B')."
         )
 
     display = display_station_name(match["station_na"])
