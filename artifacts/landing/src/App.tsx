@@ -65,7 +65,7 @@ const TOOLS = [
   },
   {
     name: "tourist_guide_exits",
-    tag: "destination · include_map_links",
+    tag: "destination · include_map_links · top_n",
     description:
       "Help tourists find the best MRT exit for a Singapore attraction or landmark, with friendly walking distance descriptions.",
   },
@@ -152,6 +152,10 @@ const TRANSPORT_HINTS: Record<Transport, React.ReactNode> = {
       with the actual path to the server. Credentials (
       <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
         API_BASE_URL
+      </span>
+      ,{" "}
+      <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
+        API_ENDPOINT_PATH
       </span>
       ,{" "}
       <span className="font-mono text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
@@ -327,9 +331,9 @@ export default function App() {
           <span className="font-mono text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded">
             MCP (Model Context Protocol)
           </span>{" "}
-          server wraps the{" "}
-          <strong className="text-gray-900">LTA MRT Station Exit GeoJSON API</strong> published at{" "}
-          <strong className="text-gray-900">api.jael.ee</strong>. It exposes{" "}
+          server wraps a{" "}
+          <strong className="text-gray-900">self-hosted LTA MRT Station Exit GeoJSON API</strong>{" "}
+          — configure your own API endpoint via environment variables. It exposes{" "}
           <strong className="text-gray-900">15 structured tools</strong> that Claude, Manus AI, and
           other MCP-compatible agents can call directly — covering navigation, spatial queries,
           accessibility, retail analytics, logistics, emergency response, and tourist guidance.
