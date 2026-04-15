@@ -1,11 +1,14 @@
 import { Router, type IRouter } from "express";
-import { HealthCheckResponse } from "@workspace/api-zod";
+import { isMcpReady } from "../mcp-readiness";
 
 const router: IRouter = Router();
 
 router.get("/healthz", (_req, res) => {
-  const data = HealthCheckResponse.parse({ status: "ok" });
-  res.json(data);
+  const mcpUp = isMcpReady();
+  res.json({
+    status: mcpUp ? "ok" : "degraded",
+    mcp: mcpUp ? "up" : "starting",
+  });
 });
 
 export default router;

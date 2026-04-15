@@ -13,7 +13,7 @@ from geo_utils import (
     display_station_name,
 )
 from maps_links import make_maps_view_link, make_maps_directions_link
-from validators import validate_top_n, validate_string, validate_coordinates
+from validators import validate_top_n, validate_string
 
 
 async def emergency_response_exits(
@@ -134,14 +134,9 @@ async def commuter_exit_comparison(
     if err:
         return err
 
-    if destination_latitude is not None and destination_longitude is not None:
-        err = validate_coordinates(destination_latitude, destination_longitude)
-        if err:
-            return err
-    elif destination_landmark:
-        err = validate_string(destination_landmark, "destination_landmark")
-        if err:
-            return err
+    has_destination = (
+        destination_latitude is not None and destination_longitude is not None
+    ) or bool(destination_landmark)
 
     exits = await fetch_exits(station_name=station_name)
     if isinstance(exits, str):
@@ -163,13 +158,13 @@ async def commuter_exit_comparison(
     dest_lat: float | None = None
     dest_lng: float | None = None
 
-    if destination_latitude is not None and destination_longitude is not None:
-        dest_lat, dest_lng = destination_latitude, destination_longitude
-    elif destination_landmark:
-        dest_coords = await resolve_landmark_or_error(destination_landmark)
-        if isinstance(dest_coords, str):
-            return dest_coords
-        dest_lat, dest_lng = dest_coords
+    if has_destination:
+        coords = await resolve_coords_or_error(
+            destination_latitude, destination_longitude, destination_landmark
+        )
+        if isinstance(coords, str):
+            return coords
+        dest_lat, dest_lng = coords
 
     if dest_lat is not None and dest_lng is not None:
         ranked = sorted(

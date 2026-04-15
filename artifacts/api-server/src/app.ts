@@ -5,7 +5,7 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 import type { ServerResponse } from "http";
 import router from "./routes";
 import { logger } from "./lib/logger";
-import { isMcpReady } from "./mcp-readiness";
+import { isMcpReady, MCP_BACKEND_PORT, MCP_BACKEND_HOST } from "./mcp-readiness";
 
 const app: Express = express();
 
@@ -32,10 +32,10 @@ app.use(cors());
 
 // ── MCP reverse proxy ──────────────────────────────────────────────────────
 // Forwards /mcp, /sse, /messages, and /.well-known to the FastMCP Python
-// server running on port 8000.  Registered BEFORE express.json() so the raw
+// server on MCP_BACKEND_PORT.  Registered BEFORE express.json() so the raw
 // request body stream is not consumed before the proxy can forward it.
 const mcpProxy = createProxyMiddleware({
-  target: "http://127.0.0.1:8000",
+  target: `http://${MCP_BACKEND_HOST}:${MCP_BACKEND_PORT}`,
   changeOrigin: true,
   on: {
     error(err, _req, res) {
@@ -77,7 +77,7 @@ app.use((req, res, next) => {
     }
     return mcpProxy(req, res, next);
   }
-  next();
+  return next();
 });
 // ── End MCP proxy ──────────────────────────────────────────────────────────
 

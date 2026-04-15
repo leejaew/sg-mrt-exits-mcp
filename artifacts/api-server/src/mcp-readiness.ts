@@ -1,6 +1,9 @@
 import net from "net";
 import { logger } from "./lib/logger";
 
+export const MCP_BACKEND_PORT = 8000;
+export const MCP_BACKEND_HOST = "127.0.0.1";
+
 let _ready = false;
 
 export const isMcpReady = () => _ready;

@@ -2,7 +2,7 @@ import { spawn } from "child_process";
 import path from "path";
 import app from "./app";
 import { logger } from "./lib/logger";
-import { watchMcpPort } from "./mcp-readiness";
+import { watchMcpPort, MCP_BACKEND_PORT, MCP_BACKEND_HOST } from "./mcp-readiness";
 
 const rawPort = process.env["PORT"];
 
@@ -40,9 +40,9 @@ if (process.env["NODE_ENV"] === "production") {
       ...process.env,
       MCP_TRANSPORT: mcpTransport,
       // Bind Python on a fixed internal port; proxy targets this.
-      PORT: "8000",
-      FASTMCP_PORT: "8000",
-      FASTMCP_HOST: "127.0.0.1",
+      PORT: String(MCP_BACKEND_PORT),
+      FASTMCP_PORT: String(MCP_BACKEND_PORT),
+      FASTMCP_HOST: MCP_BACKEND_HOST,
       // Point Python to the pre-bundled packages so imports don't require Nix.
       PYTHONPATH: sitePackages,
     },
@@ -74,9 +74,9 @@ if (process.env["NODE_ENV"] === "production") {
   logger.info({ script: mcpScript, sitePackages, mcpTransport }, "MCP server subprocess started");
 }
 
-// Watch port 8000 forever (dev + production).
+// Watch MCP backend port forever (dev + production).
 // Sets mcpReady when Python is up, clears it if Python crashes, recovers on restart.
-watchMcpPort(8000, "127.0.0.1", 2000);
+watchMcpPort(MCP_BACKEND_PORT, MCP_BACKEND_HOST, 2000);
 
 // ── Start HTTP server ──────────────────────────────────────────────────────
 app.listen(port, (err) => {
