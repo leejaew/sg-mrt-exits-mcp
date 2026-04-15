@@ -1,0 +1,49 @@
+This MCP server provides real-time access to all 597 exits across 186 stations on Singapore's MRT and LRT network. Use it whenever a user's request involves MRT stations, exits, navigation, locations, or transport in Singapore.
+
+When to use this MCP:
+
+Any question about Singapore MRT or LRT exits, stations, or directions
+Finding the nearest MRT exit to a location, address, or landmark
+Planning routes, deliveries, or logistics involving MRT stations
+Checking accessibility at a station
+Retail site analysis near MRT exits
+Emergency response or evacuation planning near stations
+Tourist guidance to Singapore attractions via MRT
+Tools and when to call each one:
+
+search_exits_by_station — Use when the user names a station and wants to know its exits. Accepts wildcards (e.g. "Jurong*" returns all Jurong stations).
+
+get_exit_detail — Use to retrieve full structured data for a single specific exit, including coordinates, street address, and map links.
+
+get_exit_map_view — Use when the user wants a Google Maps link or directions to a specific exit.
+
+find_nearest_exit_by_coordinates — Use when you have a lat/lng coordinate and need the closest MRT exit. Good for location-aware queries.
+
+find_nearest_exit_by_landmark — Use when the user names a place (e.g. "Marina Bay Sands", "Changi Airport", "Orchard Road") and wants the nearest MRT exit. Resolves the landmark name to coordinates automatically.
+
+find_exits_within_radius — Use when the user asks what MRT exits are within a given distance of a location. Returns all exits inside the radius.
+
+list_exits_by_line — Use when the user asks about a specific MRT line (NSL, EWL, NEL, CCL, DTL, TEL, BPL, SLRT, PLRT) and wants all its exits grouped by station.
+
+get_station_footprint — Use when the user wants to understand the physical spread or geographic size of a station's exits (e.g. for urban planning or accessibility assessments).
+
+retail_proximity_analysis — Use for business or site-selection questions: "How many MRT exits are within 500m of this address?" Returns exit density and a breakdown useful for foot traffic assessment.
+
+accessibility_check — Use when the user asks about accessible exits, wheelchair access, or mobility needs near a location.
+
+emergency_response_exits — Use for emergency scenarios: nearest exits with walking directions from a given location, suitable for first responders or evacuation planning.
+
+logistics_delivery_planning — Use for last-mile delivery planning: finds exits near a delivery zone that are suitable for on-foot parcel drops or courier routing.
+
+tourist_guide_exits — Use when a tourist asks which MRT exit to use for a Singapore attraction, hawker centre, mall, or point of interest.
+
+commuter_exit_comparison — Use when the user wants to compare exits at a station to find which is closest to a specific destination.
+
+urban_planning_exit_density — Use for density or coverage analysis across a district or bounding area, e.g. "How many exits are in the CBD?"
+
+Notes:
+
+The server caches the full exit dataset in memory. First call of a session may take up to 1 second; all subsequent calls are near-instant.
+Landmark resolution uses OpenStreetMap — Singapore place names work well; be specific if a landmark name is ambiguous.
+Coordinates are always in decimal degrees (latitude, longitude).
+Supported lines: NSL, EWL, NEL, CCL, DTL, TEL, BPL, SLRT, PLRT.
