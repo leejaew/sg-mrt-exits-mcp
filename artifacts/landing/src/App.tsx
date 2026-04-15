@@ -409,6 +409,25 @@ export default function App() {
               .
             </p>
           </div>
+          <div className="border-t border-gray-100 pt-5 text-center">
+            <a
+              href="https://data.gov.sg/datasets/d_b39d3a0871985372d7e1637193335da5/view"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-orange-500 hover:underline"
+            >
+              LTA Dataset →
+            </a>
+            <span className="mx-3 text-gray-400">·</span>
+            <a
+              href="https://github.com/leejaew/sg-mrt-exits-mcp"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-orange-500 hover:underline"
+            >
+              GitHub →
+            </a>
+          </div>
         </footer>
       </main>
     </div>
