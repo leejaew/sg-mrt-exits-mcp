@@ -80,3 +80,8 @@ externalPort = 3001
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+API_ENDPOINT_PATH = "/JLEE/sg_lta_mrt_station_exit_geojson_api"

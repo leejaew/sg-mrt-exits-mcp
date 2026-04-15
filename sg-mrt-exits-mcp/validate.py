@@ -43,13 +43,21 @@ async def main() -> None:
     # ── 2. Credentials ─────────────────────────────────────────────────────
     print("\n[2] Checking credentials...")
     base_url_set = bool(os.environ.get("API_BASE_URL"))
+    endpoint_path_set = bool(os.environ.get("API_ENDPOINT_PATH"))
     username_set = bool(os.environ.get("API_USERNAME"))
     token_set = bool(os.environ.get("API_TOKEN"))
-    print(f"    API_BASE_URL: {'set' if base_url_set else 'MISSING'}")
-    print(f"    API_USERNAME: {'set' if username_set else 'MISSING'}")
-    print(f"    API_TOKEN:    {'set' if token_set else 'MISSING'}")
+    print(f"    API_BASE_URL:      {'set' if base_url_set else 'MISSING'}")
+    print(f"    API_ENDPOINT_PATH: {'set' if endpoint_path_set else 'MISSING'}")
+    print(f"    API_USERNAME:      {'set' if username_set else 'MISSING'}")
+    print(f"    API_TOKEN:         {'set' if token_set else 'MISSING'}")
     if not base_url_set:
         print("    FAIL — API_BASE_URL is required. Add it to Replit Secrets.")
+        sys.exit(1)
+    if not endpoint_path_set:
+        print(
+            "    FAIL — API_ENDPOINT_PATH is required. Add it to Replit Secrets "
+            "(e.g. API_ENDPOINT_PATH=/JLEE/sg_lta_mrt_station_exit_geojson_api)."
+        )
         sys.exit(1)
     if not username_set or not token_set:
         print("    WARN — Credentials missing. Set them in Replit Secrets.")

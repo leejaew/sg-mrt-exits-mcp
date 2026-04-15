@@ -8,8 +8,10 @@ API_USERNAME: str = os.environ.get("API_USERNAME", "")
 API_TOKEN: str = os.environ.get("API_TOKEN", "")
 
 # ── API endpoint ─────────────────────────────────────────────────────────────
-# API_BASE_URL is required — set it in Replit Secrets or a .env file.
-# No hardcoded default; the server will raise at startup if it is missing.
+# Both API_BASE_URL and API_ENDPOINT_PATH are required — set them in Replit
+# Secrets (or your .env file). No hardcoded defaults; the server raises at
+# startup if either is missing, so misconfiguration is caught immediately
+# rather than silently hitting the wrong endpoint.
 _raw_base_url: str | None = os.environ.get("API_BASE_URL")
 if not _raw_base_url:
     raise EnvironmentError(
@@ -18,9 +20,13 @@ if not _raw_base_url:
     )
 API_BASE_URL: str = _raw_base_url
 
-API_ENDPOINT_PATH: str = os.environ.get(
-    "API_ENDPOINT_PATH", "/JLEE/sg_lta_mrt_station_exit_geojson_api"
-)
+_raw_endpoint_path: str | None = os.environ.get("API_ENDPOINT_PATH")
+if not _raw_endpoint_path:
+    raise EnvironmentError(
+        "API_ENDPOINT_PATH is not set. Add it to Replit Secrets (or your .env file) "
+        "before starting the server — e.g. API_ENDPOINT_PATH=/JLEE/sg_lta_mrt_station_exit_geojson_api"
+    )
+API_ENDPOINT_PATH: str = _raw_endpoint_path
 
 def get_api_url() -> str:
     """Return the fully resolved API endpoint URL."""
