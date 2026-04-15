@@ -57,14 +57,16 @@ pip install -r requirements.txt
 Add the following to **Replit Secrets** (or copy `.env.example` to `.env` for local development).
 All four are **required** — the server will not start if any are missing.
 
+> **You must provide your own API.** This server does not come with a shared or public API endpoint. Before setting these Secrets, read [**About the data source**](#about-the-data-source) below to understand your options.
+
 | Secret | Example value | Description |
 |--------|--------------|-------------|
-| `API_BASE_URL` | `https://api.jael.ee` | Base URL of the data source |
-| `API_ENDPOINT_PATH` | `/JLEE/sg_lta_mrt_station_exit_geojson_api` | API endpoint path |
-| `API_USERNAME` | `your_email@address.com` | api.jael.ee username |
-| `API_TOKEN` | `t_your_token_here` | api.jael.ee token |
+| `API_BASE_URL` | `https://your-api-host.com` | Base URL of your API host |
+| `API_ENDPOINT_PATH` | `/your/endpoint/path` | Path to the GeoJSON endpoint |
+| `API_USERNAME` | `your_username` | Username for HTTP Basic Auth (omit if unauthenticated) |
+| `API_TOKEN` | `your_token` | Token/password for HTTP Basic Auth (omit if unauthenticated) |
 
-Separating `API_BASE_URL` and `API_ENDPOINT_PATH` makes it straightforward to switch to a different API source — update both Secrets and redeploy, no code changes needed.
+`API_BASE_URL` and `API_ENDPOINT_PATH` are kept separate so you can switch hosts or paths by updating a single Secret each, with no code changes.
 
 ### 3. Optional configuration
 
@@ -106,11 +108,13 @@ The folder is self-contained and ships with a `.replit` file pre-configured for 
 
    | Secret | Value |
    |--------|-------|
-   | `API_BASE_URL` | `https://api.jael.ee` |
-   | `API_ENDPOINT_PATH` | `/JLEE/sg_lta_mrt_station_exit_geojson_api` |
-   | `API_USERNAME` | your api.jael.ee email |
-   | `API_TOKEN` | your api.jael.ee token |
+   | `API_BASE_URL` | Base URL of your API host |
+   | `API_ENDPOINT_PATH` | Path to the GeoJSON endpoint |
+   | `API_USERNAME` | Your API username (if required) |
+   | `API_TOKEN` | Your API token (if required) |
    | `MCP_TRANSPORT` | `streamable-http` |
+
+   See [**About the data source**](#about-the-data-source) for how to obtain or host an API for the underlying dataset.
 
 4. **Publish the project.** Once deployed, the MCP server is live at:
    - Streamable HTTP: `https://<your-project>.<your-username>.replit.app/mcp`
@@ -209,31 +213,25 @@ Credentials (`API_BASE_URL`, `API_ENDPOINT_PATH`, `API_USERNAME`, `API_TOKEN`) a
 |----------|-------|
 | Base URL | Configured via `API_BASE_URL` Secret |
 | Endpoint path | Configured via `API_ENDPOINT_PATH` Secret |
-| Full default URL | `https://api.jael.ee/JLEE/sg_lta_mrt_station_exit_geojson_api` |
 | Auth | HTTP Basic Auth (`API_USERNAME:API_TOKEN`, Base64-encoded) |
 | Filter | `?properties[STATION_NA]=<name>` (optional; supports wildcards) |
 | Dataset | 597 exits across 186 stations (full active MRT/LRT network) |
 
 ---
 
-## Using a Custom API Source
+## About the Data Source
 
-This MCP server is not tied to `api.jael.ee`. You can point it at any API that serves the same dataset structure — including a self-hosted instance, a mirror, or an alternative provider of the same LTA data.
+This server requires you to supply your own API that serves the LTA MRT Station Exit dataset. There is no shared or public endpoint included — the four API Secrets (`API_BASE_URL`, `API_ENDPOINT_PATH`, `API_USERNAME`, `API_TOKEN`) must point to an API you control or have credentials for.
 
-The original dataset is publicly available at no cost:
+### The underlying dataset
+
+The data comes from the Land Transport Authority and is free to use:
 
 > **LTA MRT Station Exit (GeoJSON)**
 > https://data.gov.sg/datasets/d_b39d3a0871985372d7e1637193335da5/view
 > Licensed under the [Singapore Open Data Licence](https://data.gov.sg/open-data-licence) — free for personal and commercial use.
 
-To switch the server to a different API source, update these four Secrets and redeploy — no code changes required:
-
-| Secret | What to set |
-|--------|-------------|
-| `API_BASE_URL` | Base URL of your API host (e.g. `https://your-api-host.com`) |
-| `API_ENDPOINT_PATH` | Path to the GeoJSON endpoint (e.g. `/your/endpoint/path`) |
-| `API_USERNAME` | Username for HTTP Basic Auth (leave blank if your API is unauthenticated) |
-| `API_TOKEN` | Token/password for HTTP Basic Auth (leave blank if unauthenticated) |
+You can host this dataset yourself (e.g. via a simple REST API, a spreadsheet-to-API service, or any backend that can serve the GeoJSON), then point the four Secrets at your instance.
 
 ### Compatibility requirement
 
@@ -352,10 +350,10 @@ A complete list of every environment variable / Secret the server reads:
 
 | Key | Required | Default | Description |
 |-----|----------|---------|-------------|
-| `API_BASE_URL` | Yes | — | Base URL of the data source (e.g. `https://api.jael.ee`) |
-| `API_ENDPOINT_PATH` | Yes | — | API endpoint path (e.g. `/JLEE/sg_lta_mrt_station_exit_geojson_api`) |
-| `API_USERNAME` | Yes | — | api.jael.ee username (HTTP Basic Auth) |
-| `API_TOKEN` | Yes | — | api.jael.ee token (HTTP Basic Auth) |
+| `API_BASE_URL` | Yes | — | Base URL of your API host (e.g. `https://your-api-host.com`) |
+| `API_ENDPOINT_PATH` | Yes | — | Path to the GeoJSON endpoint (e.g. `/your/endpoint/path`) |
+| `API_USERNAME` | Yes | — | Username for HTTP Basic Auth (required by server at startup; use a placeholder if your API is unauthenticated) |
+| `API_TOKEN` | Yes | — | Token/password for HTTP Basic Auth (required by server at startup; use a placeholder if your API is unauthenticated) |
 | `MCP_TRANSPORT` | No | `streamable-http` | Transport protocol: `stdio`, `sse`, or `streamable-http` |
 | `CACHE_TTL_SECONDS` | No | `300` | In-memory cache TTL for the full exits dataset (seconds) |
 | `API_MAX_CONCURRENCY` | No | `5` | Max simultaneous outbound HTTP requests |
