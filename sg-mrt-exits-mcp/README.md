@@ -68,6 +68,15 @@ All four are **required** — the server will not start if any are missing.
 
 `API_BASE_URL` and `API_ENDPOINT_PATH` are kept separate so you can switch hosts or paths by updating a single Secret each, with no code changes.
 
+**Example configuration (author's own instance):**
+
+| Secret | Value |
+|--------|-------|
+| `API_BASE_URL` | `https://api.jael.ee` |
+| `API_ENDPOINT_PATH` | `/JLEE/sg_lta_mrt_station_exit_geojson_api` |
+
+> This instance is not publicly accessible — it is shown here only to illustrate what the values look like when filled in.
+
 ### 3. Optional configuration
 
 These environment variables have sensible defaults and do not need to be set unless you want to tune behaviour:
