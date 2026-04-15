@@ -36,7 +36,7 @@ app.use(cors());
 // request body stream is not consumed before the proxy can forward it.
 const mcpProxy = createProxyMiddleware({
   target: "http://127.0.0.1:8000",
-  changeOrigin: false,
+  changeOrigin: true,
   on: {
     error(err, _req, res) {
       logger.warn({ err: (err as Error).message }, "MCP proxy error");
