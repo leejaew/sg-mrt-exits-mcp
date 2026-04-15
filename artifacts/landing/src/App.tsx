@@ -374,7 +374,7 @@ export default function App() {
           </div>
           <div className="border-t border-gray-100 pt-5 text-[11px] text-gray-400 leading-relaxed">
             <p>
-              Land Transport Authority. (2019). LTA MRT Station Exit (GEOJSON) (2026) [Dataset]. data.gov.sg. Retrieved April 14, 2026 from{" "}
+              Land Transport Authority. (2019). LTA MRT Station Exit (GEOJSON) (2026) [Dataset]. data.gov.sg. Retrieved April 15, 2026 from{" "}
               <a
                 href="https://data.gov.sg/datasets/d_b39d3a0871985372d7e1637193335da5/view"
                 target="_blank"
@@ -392,7 +392,19 @@ export default function App() {
                 rel="noopener noreferrer"
                 className="text-gray-500 hover:text-orange-500 transition-colors underline underline-offset-2"
               >
-                Open Data Licence
+                Singapore Open Data Licence version 1.0
+              </a>
+              .
+            </p>
+            <p className="mt-3 border-l-2 border-gray-200 pl-3 italic">
+              Contains information from LTA MRT Station Exit (GEOJSON) accessed on April 15, 2026 from LTA (Land Transport Authority) which is made available under the terms of the{" "}
+              <a
+                href="https://data.gov.sg/open-data-licence"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-500 hover:text-orange-500 transition-colors underline underline-offset-2"
+              >
+                Singapore Open Data Licence version 1.0
               </a>
               .
             </p>

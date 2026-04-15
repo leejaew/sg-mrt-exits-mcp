@@ -373,9 +373,15 @@ No secret values are hardcoded anywhere in the codebase. `config.py` reads every
 
 ## Data Source
 
-Land Transport Authority. (2019). LTA MRT Station Exit (GEOJSON) (2026) [Dataset]. data.gov.sg. Retrieved April 14, 2026 from https://data.gov.sg/datasets/d_b39d3a0871985372d7e1637193335da5/view
+Land Transport Authority. (2019). LTA MRT Station Exit (GEOJSON) (2026) [Dataset]. data.gov.sg. Retrieved April 15, 2026 from https://data.gov.sg/datasets/d_b39d3a0871985372d7e1637193335da5/view
 
-Dataset license: Free forever for personal or commercial use, under the [Open Data Licence](https://data.gov.sg/open-data-licence).
+Dataset license: Free forever for personal or commercial use, under the [Singapore Open Data Licence version 1.0](https://data.gov.sg/open-data-licence).
+
+### Attribution
+
+If you use this server in a product, application, or website, you must include the following notice:
+
+> Contains information from LTA MRT Station Exit (GEOJSON) accessed on April 15, 2026 from LTA (Land Transport Authority) which is made available under the terms of the [Singapore Open Data Licence version 1.0](https://data.gov.sg/open-data-licence).
 
 ---
 
